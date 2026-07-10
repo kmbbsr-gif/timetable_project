@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.title|default:"Teacher Assignment" }}{% endblock %}
+
+{% block content %}
+<h2>{{ view.title|default:"Assignment" }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Teacher field with load info -->
+            <div class="mb-3">
+                <label for="{{ form.teacher.id_for_label }}" class="form-label">Teacher</label>
+                {{ form.teacher }}
+                <div id="teacher-load-info" class="form-text text-muted">
+                    Load: <span id="load-display">--</span> / <span id="max-display">--</span> 
+                    (Remaining: <span id="remaining-display">--</span>)
+                </div>
+                <div id="potential-load-info" class="form-text" style="display:none;">
+                    <span id="potential-load-label">New Load if added: <span id="new-load-display">--</span></span>
+                    <span id="potential-remaining-label"> | New Remaining: <span id="new-remaining-display">--</span></span>
+                    <span id="warning-label" style="color:red; display:none;"> ⚠️ Exceeds max!</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="{{ form.class_subject.id_for_label }}" class="form-label">Class Subject</label>
+                {{ form.class_subject }}
+            </div>
+            <div class="mb-3">
+                <label for="{{ form.weekly_periods.id_for_label }}" class="form-label">Weekly Periods</label>
+                {{ form.weekly_periods }}
+            </div>
+            <div class="mb-3">
+                {{ form.is_primary.label_tag }}
+                {{ form.is_primary }}
+            </div>
+            <div class="mb-3">
+                {{ form.preference_weight.label_tag }}
+                {{ form.preference_weight }}
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'teacherassignment_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const teacherSelect = document.getElementById('id_teacher');
+        const weeklyPeriodsInput = document.getElementById('id_weekly_periods');
+        const loadDisplay = document.getElementById('load-display');
+        const maxDisplay = document.getElementById('max-display');
+        const remainingDisplay = document.getElementById('remaining-display');
+        const potentialLoadInfo = document.getElementById('potential-load-info');
+        const newLoadDisplay = document.getElementById('new-load-display');
+        const newRemainingDisplay = document.getElementById('new-remaining-display');
+        const warningLabel = document.getElementById('warning-label');
+
+        let currentLoad = 0;
+        let maxLoad = 0;
+
+        function updateLoad(teacherId) {
+            if (!teacherId) {
+                loadDisplay.textContent = '--';
+                maxDisplay.textContent = '--';
+                remainingDisplay.textContent = '--';
+                potentialLoadInfo.style.display = 'none';
+                return;
+            }
+            fetch(`/teachers/load/${teacherId}/`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    currentLoad = data.load;
+                    maxLoad = data.max;
+                    const remaining = data.remaining;
+                    loadDisplay.textContent = currentLoad;
+                    maxDisplay.textContent = maxLoad;
+                    remainingDisplay.textContent = remaining;
+                    updatePotentialLoad();
+                })
+                .catch(err => {
+                    console.error('Error fetching load:', err);
+                    loadDisplay.textContent = 'Error';
+                });
+        }
+
+        function updatePotentialLoad() {
+            const periods = parseInt(weeklyPeriodsInput.value) || 0;
+            const newTotal = currentLoad + periods;
+            const newRemaining = maxLoad - newTotal;
+
+            if (periods > 0) {
+                potentialLoadInfo.style.display = 'block';
+                newLoadDisplay.textContent = newTotal;
+                newRemainingDisplay.textContent = newRemaining;
+                if (newTotal > maxLoad) {
+                    warningLabel.style.display = 'inline';
+                } else {
+                    warningLabel.style.display = 'none';
+                }
+            } else {
+                potentialLoadInfo.style.display = 'none';
+            }
+        }
+
+        // Events
+        teacherSelect.addEventListener('change', function() {
+            updateLoad(this.value);
+        });
+
+        weeklyPeriodsInput.addEventListener('input', function() {
+            updatePotentialLoad();
+        });
+
+        // Initial load if teacher pre-selected
+        if (teacherSelect.value) {
+            updateLoad(teacherSelect.value);
+        }
+    });
+</script>
+{% endblock %}

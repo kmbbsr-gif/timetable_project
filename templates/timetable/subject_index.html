@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Subjects' Timetables{% endblock %}
+{% block content %}
+<h2>Subjects' Timetables</h2>
+<ul class="list-group">
+    {% for s in subjects %}
+        <li class="list-group-item d-flex justify-content-between">
+            {{ s.name }} ({{ s.code }})
+            <a href="{% url 'view_subject_timetable' s.id %}" class="btn btn-sm btn-primary">View</a>
+        </li>
+    {% empty %}
+        <li>No subjects with timetable entries.</li>
+    {% endfor %}
+</ul>
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %}

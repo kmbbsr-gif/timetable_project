@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ school.name }} - Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{{ school.name }}</h1>
+    <div>
+        <a href="{% url 'school_update' school.pk %}" class="btn btn-secondary">
+            <i class="bi bi-pencil"></i> Edit
+        </a>
+        <a href="{% url 'school_delete' school.pk %}" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Delete
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        {% if school.logo %}
+            <img src="{{ school.logo.url }}" class="img-fluid mb-3" alt="{{ school.name }}">
+        {% endif %}
+        <div class="card">
+            <div class="card-body">
+                <h5>Board</h5>
+                <p>{{ school.board }}</p>
+                <h5>Affiliation</h5>
+                <p>{{ school.affiliation_no }}</p>
+                <h5>UDISE Code</h5>
+                <p>{{ school.udise_code }}</p>
+                <h5>School Code</h5>
+                <p>{{ school.school_code }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card mb-3">
+            <div class="card-header">Address</div>
+            <div class="card-body">
+                <p>{{ school.address }}</p>
+                <p>{{ school.city }}, {{ school.district }}, {{ school.state }} - {{ school.pin_code }}</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">Administration</div>
+                    <div class="card-body">
+                        <p><strong>Principal:</strong> {{ school.principal_name }}</p>
+                        <p><strong>Vice Principal:</strong> {{ school.vice_principal_name }}</p>
+                        <p><strong>Academic Coordinator:</strong> {{ school.academic_coordinator }}</p>
+                        <p><strong>Exam Incharge:</strong> {{ school.exam_incharge }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-3">
+                    <div class="card-header">Timings</div>
+                    <div class="card-body">
+                        <p><strong>Session:</strong> {{ school.session_start }} to {{ school.session_end }}</p>
+                        <p><strong>Opening:</strong> {{ school.opening_time }}</p>
+                        <p><strong>Closing:</strong> {{ school.closing_time }}</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">Contact</div>
+                    <div class="card-body">
+                        <p><i class="bi bi-telephone"></i> {{ school.contact_number }}</p>
+                        <p><i class="bi bi-envelope"></i> {{ school.email }}</p>
+                        <p><i class="bi bi-globe"></i> <a href="{{ school.website }}" target="_blank">{{ school.website }}</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{% url 'school_list' %}" class="btn btn-outline-primary mt-3">
+    <i class="bi bi-arrow-left"></i> Back to Schools
+</a>
+{% endblock %}

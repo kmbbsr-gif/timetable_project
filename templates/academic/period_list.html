@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}periods{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">periods</h1>
+    <a href="{% url 'period_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add period</a>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Name</th>
+            <th>Wing</th>
+            <th>Strength</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for period in periods %}
+        <tr>
+            <td>{{ period.class_instance.name }}</td>
+            <td>{{ period.name }}</td>
+            <td>{{ period.wing }}</td>
+            <td>{{ period.student_strength }}</td>
+            <td>
+                <a href="{% url 'period_detail' period.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="{% url 'period_update' period.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'period_delete' period.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center">No periods added yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Sections{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Sections</h1>
+    <a href="{% url 'section_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add Section</a>
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Name</th>
+            <th>Wing</th>
+            <th>Strength</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for section in sections %}
+        <tr>
+            <td>{{ section.class_instance.name }}</td>
+            <td>{{ section.name }}</td>
+            <td>{{ section.wing }}</td>
+            <td>{{ section.student_strength }}</td>
+            <td>
+                <a href="{% url 'section_detail' section.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="{% url 'section_update' section.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'section_delete' section.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center">No sections added yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load timetable_tags %}
+
+{% block title %}Free Teachers by Date{% endblock %}
+
+{% block content %}
+<h2>Free Teachers by Date</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{% url 'free_periods_by_date' %}" class="row g-3">
+            <div class="col-md-6">
+                <label for="date" class="form-label">Select Date</label>
+                <input type="date" name="date" id="date" class="form-control" value="{{ selected_date }}">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">Show</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_date %}
+    <h4>Showing timetable for {{ selected_date }}</h4>
+{% endif %}
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Period</th>
+            {% for day_idx, day_name in days_with_indices %}
+                <th>{{ day_name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table %}
+            <tr>
+                <td>
+                    <strong>P{{ row.period.period_number }}</strong>
+                    {% if row.period.start_time %}
+                        <br><small>{{ row.period.start_time|time:"H:i" }}</small>
+                    {% endif %}
+                </td>
+                {% for free_list in row.cells %}
+                    <td>
+                        {% if free_list %}
+                            {{ free_list|join:", " }}
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% empty %}
+            <tr><td colspan="{{ days_with_indices|length|add:1 }}">No periods.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary">Back</a>
+{% endblock %}

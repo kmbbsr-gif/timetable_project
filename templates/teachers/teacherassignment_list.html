@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher-Subject Assignments{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Teacher-Subject Assignments</h1>
+    <a href="{% url 'teacherassignment_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Assignment
+    </a>
+</div>
+<div class="alert alert-info">
+    <strong>Total required periods per week:</strong> {{ total_required }}
+    &nbsp;|&nbsp;
+    <strong>Assigned:</strong> {{ total_assigned }}
+    &nbsp;|&nbsp;
+    <strong>Remaining to assign:</strong> {{ total_remaining }}
+    &nbsp;|&nbsp;
+    <strong>Teaching slots (excluding breaks/assembly):</strong> {{ teaching_slots }}
+    &nbsp;|&nbsp;
+    <strong>Total slots (incl. breaks):</strong> {{ total_slots }}
+    <strong>Teaching slots (excluding breaks/assembly):</strong> {{ teaching_slots }}
+    &nbsp;|&nbsp;
+    <strong>Active teachers:</strong> {{ active_teacher_count }}
+    &nbsp;|&nbsp;
+    <strong>Average periods per teacher:</strong> {{ average_per_teacher }}
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Teacher</th>
+            <th>Class</th>
+            <th>Subject</th>
+            <th>Weekly Periods</th>
+            <th>Primary</th>
+            <th>Weight</th>
+            <th>Actions</th>
+            <th>Teacher Load</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for ass in assignments %}
+        <tr>
+            <td>{{ ass.teacher.name }}</td>
+            <td>{{ ass.class_subject.class_instance.name }}</td>
+            <td>{{ ass.class_subject.subject.name }}</td>
+            <td>{{ ass.weekly_periods }}</td>
+            <td>{% if ass.is_primary %}✅{% else %}❌{% endif %}</td>
+            <td>{{ ass.preference_weight }}</td>
+            <td>
+                <a href="{% url 'teacherassignment_detail' ass.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="{% url 'teacherassignment_update' ass.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'teacherassignment_delete' ass.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+            <td>{{ ass.teacher_load }} / {{ ass.teacher_max }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center">No assignments yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Free Teachers{% endblock %}
+
+{% block content %}
+<h2>Free Teachers by Period</h2>
+
+<!-- Main table: free teachers per period/day -->
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Period</th>
+            {% for day_idx, day_name in days_with_indices %}
+                <th>{{ day_name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table %}
+            <tr>
+                <td>
+                    <strong>P{{ row.period.period_number }}</strong>
+                    {% if row.period.start_time %}
+                        <br><small>{{ row.period.start_time|time:"H:i" }}</small>
+                    {% endif %}
+                </td>
+                {% for free_list in row.cells %}
+                    <td>
+                        {% if free_list %}
+                            {{ free_list|join:", " }}
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% empty %}
+            <tr><td colspan="{{ days_with_indices|length|add:1 }}">No periods.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<hr>
+
+<!-- Teacher Free Period Lookup -->
+<div class="card mt-4">
+    <div class="card-header bg-success text-white">Check Teacher Free Periods</div>
+    <div class="card-body">
+        <form method="get" action="{% url 'free_periods' %}" class="row g-3">
+            <div class="col-md-4">
+                <label for="teacher_id" class="form-label">Teacher</label>
+                <select name="teacher_id" id="teacher_id" class="form-select">
+                    <option value="">-- Select --</option>
+                    {% for t in teachers %}
+                        <option value="{{ t.id }}" {% if selected_teacher and selected_teacher.id == t.id %}selected{% endif %}>
+                            {{ t.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="day" class="form-label">Day</label>
+                <select name="day" id="day" class="form-select">
+                    <option value="all" {% if selected_day == 'all' %}selected{% endif %}>All Days</option>
+                    {% for idx, name in days_with_indices %}
+                        <option value="{{ idx }}" {% if selected_day == idx|stringformat:"s" %}selected{% endif %}>
+                            {{ name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-success w-100">Check</button>
+            </div>
+        </form>
+
+        {% if teacher_free_info %}
+            <div class="mt-3">
+                <h5>Results for {{ selected_teacher.name }}</h5>
+                {% if teacher_free_info.type == 'all_days' %}
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Day</th>
+                                <th>Free Periods</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day_name, periods in teacher_free_info.data.items %}
+                                <tr>
+                                    <td>{{ day_name }}</td>
+                                    <td>
+                                        {% if periods %}
+                                            P{{ periods|join:", P" }}
+                                        {% else %}
+                                            <span class="text-muted">None</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p><strong>Day:</strong> {{ teacher_free_info.day }}</p>
+                    <p><strong>Free Periods:</strong>
+                        {% if teacher_free_info.periods %}
+                            P{{ teacher_free_info.periods|join:", P" }}
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        {% elif selected_teacher %}
+            <div class="mt-3 alert alert-warning">No timetable entries found for this teacher (or all periods are busy).</div>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %}

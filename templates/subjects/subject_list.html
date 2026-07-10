@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Subjects{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Subjects</h1>
+    <a href="{% url 'subject_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Subject
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>School</th>
+            <th>Optional</th>
+            <th>Lab</th>
+            <th>Practical</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for subject in subjects %}
+        <tr>
+            <td>{{ subject.code }}</td>
+            <td>{{ subject.name }}</td>
+            <td>{{ subject.school.name }}</td>
+            <td>{% if subject.is_optional %}✅{% else %}❌{% endif %}</td>
+            <td>{% if subject.requires_lab %}✅{% else %}❌{% endif %}</td>
+            <td>{% if subject.requires_practical %}✅{% else %}❌{% endif %}</td>
+            <td>
+                <a href="{% url 'subject_detail' subject.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="{% url 'subject_update' subject.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'subject_delete' subject.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center">No subjects added yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,21 @@
+Django==5.0.6
+djangorestframework==3.15.1
+django-cors-headers==4.3.1
+django-filter==24.2
+drf-spectacular==0.27.1
+
+python-dotenv==1.0.1
+# celery==5.3.6
+# redis==5.0.4
+openpyxl==3.1.2
+# pandas==2.2.2
+reportlab==4.2.0
+weasyprint==62.3
+python-constraint==1.4.0
+deap==1.4.1
+django-htmx==1.18.0
+django-import-export==4.1.1
+djangorestframework-simplejwt==5.3.0
+django-ckeditor==6.7.0
+Pillow
+gunicorn==22.0.0

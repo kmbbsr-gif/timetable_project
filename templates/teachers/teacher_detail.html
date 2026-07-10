@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+    <h1>{{ object.name }}</h1>
+    <div>
+        <a href="{% url 'teacher_update' object.pk %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'teacher_delete' object.pk %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <p><strong>School:</strong> {{ object.school.name }}</p>
+        <p><strong>Employee ID:</strong> {{ object.employee_id }}</p>
+        <p><strong>Mobile:</strong> {{ object.mobile }}</p>
+        <p><strong>Email:</strong> {{ object.email }}</p>
+        <p><strong>Designation:</strong> {{ object.designation }}</p>
+        <p><strong>Department:</strong> {{ object.department }}</p>
+    </div>
+    <div class="col-md-6">
+        <p><strong>Max Daily Load:</strong> {{ object.max_daily_load }}</p>
+        <p><strong>Max Weekly Load:</strong> {{ object.max_weekly_load }}</p>
+        <p><strong>Class Teacher:</strong> {% if object.is_class_teacher %}Yes{% else %}No{% endif %}</p>
+        {% if object.is_class_teacher and object.class_teacher_for %}
+            <p><strong>Class Teacher For:</strong> {{ object.class_teacher_for.name }}</p>
+        {% endif %}
+        <p><strong>Co-Class Teacher:</strong> {% if object.is_co_class_teacher %}Yes{% else %}No{% endif %}</p>
+        <p><strong>Half Day:</strong> {% if object.half_day %}Yes{% else %}No{% endif %}</p>
+        <p><strong>Late Arrival:</strong> {{ object.late_arrival|default:"-" }}</p>
+        <p><strong>Early Departure:</strong> {{ object.early_departure|default:"-" }}</p>
+        <p><strong>Status:</strong> {% if object.is_active %}Active{% else %}Inactive{% endif %}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <h5>Preferred Periods</h5>
+        <p>{{ object.preferred_periods|join:", "|default:"None" }}</p>
+    </div>
+    <div class="col-md-4">
+        <h5>Preferred Days</h5>
+        <p>{{ object.preferred_days|join:", "|default:"None" }}</p>
+    </div>
+    <div class="col-md-4">
+        <h5>Unavailable Days</h5>
+        <p>{{ object.unavailable_days|join:", "|default:"None" }}</p>
+    </div>
+</div>
+
+<a href="{% url 'teacher_list' %}" class="btn btn-outline-primary mt-3">Back to Teachers</a>
+{% endblock %}

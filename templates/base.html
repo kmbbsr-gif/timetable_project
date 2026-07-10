@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Timetable System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Extra CSS per page -->
+    {% block extra_css %}{% endblock %}
+
+    <!-- Print‑friendly styles (applies when printing) -->
+    <style media="print">
+        .no-print {
+            display: none !important;
+        }
+        .table {
+            font-size: 10pt;
+        }
+        .table-bordered td,
+        .table-bordered th {
+            border: 1px solid #000 !important;
+        }
+        body {
+            padding: 0.5in;
+        }
+        .timetable-cell .entry {
+            background: none !important;
+        }
+        /* Hide navbar, buttons, and other non-print elements */
+        .navbar,
+        .btn,
+        .no-print {
+            display: none !important;
+        }
+        .table-bordered {
+            border: 1px solid #000 !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar – hidden on print -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">🏫 Timetable Pro</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'school_list' %}">Schools</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'session_list' %}">Sessions</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'class_list' %}">Classes</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'section_list' %}">Sections</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'room_list' %}">Rooms</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'period_list' %}">Periods</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'subject_list' %}">Subjects</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'teacher_list' %}">Teachers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'classsubject_list' %}">Class-Subject</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'teacherassignment_list' %}">Assign Teachers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'bulk_period_create' %}">Bulk Add Periods</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'timetable_index' %}">Timetables</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'teacher_timetable_index' %}">Teacher Timetable</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'subject_timetable_index' %}">Subject Timetable</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'master_timetable' %}">Master</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'free_periods' %}">Free Teachers</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'free_slots' %}">Free Slots</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'generate_timetable' %}">Generate</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'manage_absence' %}">Absence</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'free_periods_by_date' %}">Free by Date</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.title|default:"Session Form" }}{% endblock %}
+
+{% block content %}
+<h2>{{ view.title|default:"Session" }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'session_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

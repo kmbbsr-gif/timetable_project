@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}View Timetables{% endblock %}
+
+{% block content %}
+<h2>View Timetables</h2>
+
+<!-- Dropdown Selector -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">Select Class & Section</div>
+    <div class="card-body">
+        <form method="get" action="{% url 'select_class' %}" class="row g-3">
+            <div class="col-md-5">
+                <label for="class_id" class="form-label">Class</label>
+                <select name="class_id" id="class_id" class="form-select" required>
+                    <option value="">-- Select --</option>
+                    {% for item in class_sections %}
+                        <option value="{{ item.class.id }}">{{ item.class.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="section_id" class="form-label">Section</label>
+                <select name="section_id" id="section_id" class="form-select" required>
+                    <option value="">-- Select --</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">View</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Access removed as requested -->
+
+<a href="{% url 'dashboard' %}" class="btn btn-secondary mt-3">Back to Dashboard</a>
+
+{{ sections_data_json|json_script:"sections_data_json" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const jsonElement = document.getElementById('sections_data_json');
+        if (!jsonElement) {
+            console.error('Element #sections_data_json not found!');
+            return;
+        }
+
+        let sectionsData;
+        try {
+            sectionsData = JSON.parse(jsonElement.textContent);
+        } catch (e) {
+            console.error('Failed to parse JSON:', e);
+            return;
+        }
+
+        const classSelect = document.getElementById('class_id');
+        const sectionSelect = document.getElementById('section_id');
+
+        function populateSections(classId) {
+            sectionSelect.innerHTML = '<option value="">-- Select --</option>';
+            const classData = sectionsData.find(item => item.class.id === classId);
+            if (classData) {
+                classData.sections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = section.name;
+                    sectionSelect.appendChild(option);
+                });
+            }
+        }
+
+        const initialClassId = parseInt(classSelect.value);
+        if (initialClassId) {
+            populateSections(initialClassId);
+        }
+
+        classSelect.addEventListener('change', function() {
+            const classId = parseInt(this.value);
+            populateSections(classId);
+        });
+    });
+</script>
+{% endblock %}

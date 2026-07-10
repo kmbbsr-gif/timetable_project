@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Assignment{% endblock %}
+
+{% block content %}
+<div class="card border-danger">
+    <div class="card-header bg-danger text-white">Confirm Deletion</div>
+    <div class="card-body">
+        <p>Are you sure you want to delete the assignment for <strong>{{ classsubject.class_instance.name }} – {{ classsubject.subject.name }}</strong>?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            <a href="{% url 'classsubject_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

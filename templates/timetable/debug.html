@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>All Timetable Entries</h2>
+<ul>
+    {% for line in entries %}
+        <li>{{ line }}</li>
+    {% empty %}
+        <li>No entries found.</li>
+    {% endfor %}
+</ul>
+<a href="{% url 'timetable_index' %}">Back</a>
+{% endblock %}

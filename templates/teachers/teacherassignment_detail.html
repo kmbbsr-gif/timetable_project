@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Assignment Detail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+    <h1>{{ object.teacher.name }} – {{ object.class_subject }}</h1>
+    <div>
+        <a href="{% url 'teacherassignment_update' object.pk %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'teacherassignment_delete' object.pk %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+
+<p><strong>Teacher:</strong> {{ object.teacher.name }}</p>
+<p><strong>Class:</strong> {{ object.class_subject.class_instance.name }}</p>
+<p><strong>Subject:</strong> {{ object.class_subject.subject.name }}</p>
+<p><strong>Weekly Periods:</strong> {{ object.weekly_periods }}</p>
+<p><strong>Primary Teacher:</strong> {% if object.is_primary %}Yes{% else %}No{% endif %}</p>
+<p><strong>Preference Weight:</strong> {{ object.preference_weight }}</p>
+
+<a href="{% url 'teacherassignment_list' %}" class="btn btn-outline-primary mt-3">Back to Assignments</a>
+{% endblock %}

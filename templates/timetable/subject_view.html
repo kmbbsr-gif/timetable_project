@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ subject.name }} - Timetable{% endblock %}
+
+{% block content %}
+<h2>{{ subject.name }} ({{ subject.code }})</h2>
+<div class="btn-group mb-3 no-print" role="group">
+    <a href="{% url 'export_subject_pdf' subject.id %}" class="btn btn-danger">PDF</a>
+    <a href="{% url 'export_subject_excel' subject.id %}" class="btn btn-success">Excel</a>
+    <a href="{% url 'export_subject_csv' subject.id %}" class="btn btn-info">CSV</a>
+    <button onclick="window.print()" class="btn btn-secondary">Print</button>
+</div>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Period</th>
+            {% for day_idx, day_name in days_with_indices %}
+                <th>{{ day_name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table %}
+            <tr>
+                <td>
+                    <strong>P{{ row.period.period_number }}</strong>
+                    {% if row.period.start_time %}
+                        <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
+                    {% endif %}
+                </td>
+                {% for cell_list in row.cells %}
+                    <td>
+                        {% if cell_list %}
+                            {% for entry in cell_list %}
+                                <strong>{{ entry.class_instance.name }} {{ entry.section.name }}</strong><br>
+                                <small>{{ entry.teacher.name }}</small>
+                                {% if not forloop.last %}<hr>{% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% empty %}
+            <tr><td colspan="{{ days_with_indices|length|add:1 }}">No periods.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'subject_timetable_index' %}" class="btn btn-secondary">Back</a>
+{% endblock %}

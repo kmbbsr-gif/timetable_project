@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Teachers{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Teachers</h1>
+    <a href="{% url 'teacher_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Add Teacher
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>School</th>
+            <th>Designation</th>
+            <th>Mobile</th>
+            <th>Class Teacher</th>
+            <th>Class Teacher For</th>
+            <th>Weekly Load</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for teacher in teachers %}
+        <tr>
+            <td>{{ teacher.employee_id }}</td>
+            <td>{{ teacher.name }}</td>
+            <td>{{ teacher.school.name }}</td>
+            <td>{{ teacher.designation }}</td>
+            <td>{{ teacher.mobile }}</td>
+            <td>{% if teacher.is_class_teacher %}✅{% else %}❌{% endif %}</td>
+            <td>{{ teacher.class_teacher_for.name|default:"-" }}</td>
+            <td>{{ teacher.total_periods }}</td>
+            <td>
+                {% if teacher.is_active %}
+                    <span class="badge bg-success">Active</span>
+                {% else %}
+                    <span class="badge bg-danger">Inactive</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% url 'teacher_detail' teacher.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="{% url 'teacher_update' teacher.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <a href="{% url 'teacher_delete' teacher.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center">No teachers added yet.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

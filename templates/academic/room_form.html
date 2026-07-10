@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.title|default:"Room Form" }}{% endblock %}
+
+{% block content %}
+<h2>{{ view.title|default:"Room" }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a href="{% url 'room_list' %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+
+{% block title %}Master Timetable (Editable){% endblock %}
+
+{% block extra_css %}
+<style>
+    .timetable-cell {
+        min-width: 70px;
+        min-height: 60px;
+        transition: background-color 0.2s;
+        vertical-align: middle;
+    }
+    .timetable-cell.dragover-highlight {
+        background-color: #cce5ff !important;
+        border: 2px solid #007bff;
+    }
+    .timetable-cell .entry {
+        cursor: grab;
+        padding: 4px;
+        border-radius: 4px;
+        background: #e9ecef;
+        display: inline-block;
+        width: 100%;
+        text-align: center;
+    }
+    .timetable-cell .entry:active {
+        cursor: grabbing;
+    }
+    .edit-mode-on .timetable-cell .entry {
+        cursor: grab;
+    }
+    .edit-mode-off .timetable-cell .entry {
+        cursor: default;
+    }
+    #edit-toggle {
+        margin-left: 10px;
+    }
+    .list-group-item-action {
+        cursor: pointer;
+    }
+    .list-group-item-action:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>
+    Master Timetable
+    <button id="edit-toggle" class="btn btn-sm btn-warning">Edit Mode</button>
+    <span id="mode-indicator" class="badge bg-secondary">Read‑only</span>
+</h2>
+
+<!-- Export Buttons -->
+<div class="btn-group mb-3 no-print" role="group">
+    <a href="{% url 'export_pdf' %}" class="btn btn-danger">PDF</a>
+    <a href="{% url 'export_excel' %}" class="btn btn-success">Excel</a>
+    <a href="{% url 'export_csv' %}" class="btn btn-info">CSV</a>
+    <button onclick="window.print()" class="btn btn-secondary">Print</button>
+</div>
+
+<div id="master-container">
+    {% for item in data %}
+        <h4>{{ item.class.name }} - {{ item.section.name }}</h4>
+        <table class="table table-bordered table-sm" 
+               data-class-id="{{ item.class.id }}" 
+               data-section-id="{{ item.section.id }}">
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    {% for day_idx, day_name in days_with_indices %}
+                        <th>{{ day_name|slice:":3" }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in item.table %}
+                    <tr>
+                        <td>
+                            <strong>P{{ row.period.period_number }}</strong>
+                            {% if row.period.start_time %}
+                                <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
+                            {% endif %}
+                        </td>
+                        {% for cell in row.cells %}
+                            <td class="timetable-cell" 
+                                data-class-id="{{ item.class.id }}"
+                                data-section-id="{{ item.section.id }}"
+                                data-day="{{ forloop.counter0 }}"
+                                data-period="{{ row.period.period_number }}"
+                                data-entry-id="{% if cell %}{{ cell.id }}{% endif %}"
+                                draggable="false">
+                                {% if cell %}
+                                    <div class="entry" data-entry-id="{{ cell.id }}">
+                                        <strong>{{ cell.subject.code }}</strong><br>
+                                        <small>{{ cell.teacher.name|slice:":10" }}</small>
+                                    </div>
+                                {% else %}
+                                    &nbsp;
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <hr>
+    {% empty %}
+        <div class="alert alert-info">No timetables generated yet.</div>
+    {% endfor %}
+</div>
+
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary no-print">Back</a>
+
+<!-- Enhanced Conflict Modal -->
+<div class="modal fade" id="conflictModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Conflict Detected</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Conflicts:</strong></p>
+                <ul id="conflict-list"></ul>
+
+                <hr>
+                <p><strong>Suggested Resolutions:</strong></p>
+                <div id="suggestions-container">
+                    <div id="free-teachers-section" style="display:none;">
+                        <p>Assign these free teachers to the target period:</p>
+                        <ul id="free-teachers-list" class="list-group"></ul>
+                    </div>
+                    <div id="free-periods-section" style="display:none;">
+                        <p>Move the dragged class to one of these free periods:</p>
+                        <ul id="free-periods-list" class="list-group"></ul>
+                    </div>
+                    <div id="no-suggestions" style="display:none;" class="text-muted">
+                        No automatic suggestions available. Use the actions below.
+                    </div>
+                </div>
+
+                <hr>
+                <p><strong>Actions:</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="swap-teachers" style="display:none;">Swap Teachers</button>
+                <button type="button" class="btn btn-danger" id="confirm-override">Override</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript with all features -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggleBtn = document.getElementById('edit-toggle');
+        const modeIndicator = document.getElementById('mode-indicator');
+        const conflictModal = new bootstrap.Modal(document.getElementById('conflictModal'));
+        const conflictList = document.getElementById('conflict-list');
+        const confirmOverrideBtn = document.getElementById('confirm-override');
+        const swapTeachersBtn = document.getElementById('swap-teachers');
+        const freeTeachersList = document.getElementById('free-teachers-list');
+        const freePeriodsList = document.getElementById('free-periods-list');
+        const freeTeachersSection = document.getElementById('free-teachers-section');
+        const freePeriodsSection = document.getElementById('free-periods-section');
+        const noSuggestions = document.getElementById('no-suggestions');
+
+        let editMode = false;
+        let dragData = null;
+        let currentPendingData = null;
+
+        // ---- Edit mode persistence ----
+        function applyEditMode(enable) {
+            editMode = enable;
+            toggleBtn.textContent = editMode ? 'Exit Edit Mode' : 'Edit Mode';
+            modeIndicator.textContent = editMode ? 'Edit' : 'Read‑only';
+            modeIndicator.className = 'badge ' + (editMode ? 'bg-warning' : 'bg-secondary');
+            document.querySelectorAll('.timetable-cell').forEach(cell => {
+                cell.draggable = editMode && cell.dataset.entryId;
+            });
+            document.querySelectorAll('.timetable-cell .entry').forEach(entry => {
+                entry.style.cursor = editMode ? 'grab' : 'default';
+            });
+            localStorage.setItem('editMode', editMode ? 'true' : 'false');
+        }
+
+        const saved = localStorage.getItem('editMode');
+        applyEditMode(saved === 'true');
+
+        toggleBtn.addEventListener('click', function() {
+            applyEditMode(!editMode);
+        });
+
+        // ---- Drag & Drop ----
+        document.addEventListener('dragstart', function(e) {
+            const cell = e.target.closest('.timetable-cell');
+            if (!cell || !editMode) {
+                e.preventDefault();
+                return;
+            }
+            const entryId = cell.dataset.entryId;
+            if (!entryId) {
+                e.preventDefault();
+                return;
+            }
+            dragData = {
+                entryId: entryId,
+                classId: cell.dataset.classId,
+                sectionId: cell.dataset.sectionId,
+                day: cell.dataset.day,
+                period: cell.dataset.period,
+                sourceCell: cell,
+            };
+            e.dataTransfer.setData('text/plain', entryId);
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const cell = e.target.closest('.timetable-cell');
+            if (cell && editMode) {
+                document.querySelectorAll('.timetable-cell').forEach(c => c.classList.remove('dragover-highlight'));
+                cell.classList.add('dragover-highlight');
+            }
+        });
+
+        document.addEventListener('dragleave', function(e) {
+            const cell = e.target.closest('.timetable-cell');
+            if (cell) {
+                cell.classList.remove('dragover-highlight');
+            }
+        });
+
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.timetable-cell').forEach(c => c.classList.remove('dragover-highlight'));
+
+            if (!editMode || !dragData) {
+                alert('Edit mode is off. Enable edit mode to move entries.');
+                return;
+            }
+
+            const targetCell = e.target.closest('.timetable-cell');
+            if (!targetCell) return;
+
+            const targetEntryId = targetCell.dataset.entryId;
+            const sourceId = dragData.entryId;
+
+            if (sourceId === targetEntryId) {
+                dragData = null;
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('source_id', sourceId);
+            formData.append('override', 'false');
+            formData.append('move', targetEntryId ? 'false' : 'true');
+
+            if (targetEntryId) {
+                formData.append('target_id', targetEntryId);
+            } else {
+                formData.append('target_class', targetCell.dataset.classId);
+                formData.append('target_section', targetCell.dataset.sectionId);
+                formData.append('target_day', targetCell.dataset.day);
+                formData.append('target_period', targetCell.dataset.period);
+            }
+
+            // Store for later use in suggestions
+            currentPendingData = {
+                formData: formData,
+                sourceId: sourceId,
+                targetEntryId: targetEntryId,
+                targetCell: targetCell,
+                sourceClassId: dragData.classId,
+                sourceSectionId: dragData.sectionId,
+            };
+
+            fetch('/timetable/swap/', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            })
+            .then(response => {
+                if (response.status === 409) {
+                    return response.json().then(data => {
+                        // Show conflicts
+                        conflictList.innerHTML = data.conflicts.map(c => `<li>${c}</li>`).join('');
+
+                        // Show suggestions
+                        freeTeachersList.innerHTML = '';
+                        freePeriodsList.innerHTML = '';
+                        freeTeachersSection.style.display = 'none';
+                        freePeriodsSection.style.display = 'none';
+                        noSuggestions.style.display = 'none';
+
+                        if (data.suggestions) {
+                            let hasSuggestions = false;
+
+                            // Free teachers
+                            if (data.suggestions.free_teachers && data.suggestions.free_teachers.length > 0) {
+                                hasSuggestions = true;
+                                freeTeachersSection.style.display = 'block';
+                                data.suggestions.free_teachers.forEach(t => {
+                                    const li = document.createElement('li');
+                                    li.className = 'list-group-item list-group-item-action';
+                                    li.textContent = t.name;
+                                    li.dataset.teacherId = t.id;
+                                    li.addEventListener('click', function() {
+                                        // Assign this free teacher to the target period
+                                        const fd = currentPendingData.formData;
+                                        fd.set('assign_free_teacher', this.dataset.teacherId);
+                                        fd.set('override', 'true');
+                                        fd.delete('swap_teachers');
+                                        sendResolve(fd);
+                                    });
+                                    freeTeachersList.appendChild(li);
+                                });
+                            }
+
+                            // Free periods
+                            if (data.suggestions.free_periods && data.suggestions.free_periods.length > 0) {
+                                hasSuggestions = true;
+                                freePeriodsSection.style.display = 'block';
+                                const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                                data.suggestions.free_periods.forEach(slot => {
+                                    const li = document.createElement('li');
+                                    li.className = 'list-group-item list-group-item-action';
+                                    li.textContent = `${dayNames[slot.day]} P${slot.period}`;
+                                    li.addEventListener('click', function() {
+                                        const fd = currentPendingData.formData;
+                                        fd.set('move', 'true');
+                                        fd.set('target_day', slot.day);
+                                        fd.set('target_period', slot.period);
+                                        fd.set('target_class', currentPendingData.sourceClassId);
+                                        fd.set('target_section', currentPendingData.sourceSectionId);
+                                        fd.set('override', 'true');
+                                        fd.delete('swap_teachers');
+                                        sendResolve(fd);
+                                    });
+                                    freePeriodsList.appendChild(li);
+                                });
+                            }
+
+                            if (!hasSuggestions) {
+                                noSuggestions.style.display = 'block';
+                            }
+                        }
+
+                        // Show/hide swap teachers button based on conflict type
+                        const hasTeacherConflict = data.conflicts.some(c => c.toLowerCase().includes('teacher'));
+                        swapTeachersBtn.style.display = hasTeacherConflict ? 'inline-block' : 'none';
+
+                        conflictModal.show();
+                    });
+                } else if (response.ok) {
+                    return response.json().then(data => {
+                        if (data.success) location.reload();
+                        else alert('Error: ' + JSON.stringify(data));
+                    });
+                } else {
+                    throw new Error('Server error: ' + response.status);
+                }
+            })
+            .catch(err => {
+                alert('Network error: ' + err);
+                dragData = null;
+            });
+        });
+
+        // ---- Helper to send resolve request ----
+        function sendResolve(formData) {
+            conflictModal.hide();
+            fetch('/timetable/swap/', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else alert('Error: ' + JSON.stringify(data));
+            })
+            .catch(err => alert('Network error: ' + err));
+            currentPendingData = null;
+        }
+
+        // ---- Override button ----
+        confirmOverrideBtn.addEventListener('click', function() {
+            conflictModal.hide();
+            if (currentPendingData) {
+                const fd = currentPendingData.formData;
+                fd.set('override', 'true');
+                fd.delete('swap_teachers');
+                sendResolve(fd);
+            }
+        });
+
+        // ---- Swap Teachers button ----
+        swapTeachersBtn.addEventListener('click', function() {
+            conflictModal.hide();
+            if (currentPendingData) {
+                const fd = currentPendingData.formData;
+                fd.set('swap_teachers', 'true');
+                fd.set('override', 'false');
+                fd.delete('move');
+                sendResolve(fd);
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+    <h1>{{ object.name }}</h1>
+    <div>
+        <a href="{% url 'room_update' object.pk %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'room_delete' object.pk %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+
+<p><strong>School:</strong> {{ object.school.name }}</p>
+<p><strong>Type:</strong> {{ object.type }}</p>
+<p><strong>Capacity:</strong> {{ object.capacity }}</p>
+<p><strong>Status:</strong> {% if object.is_active %}Active{% else %}Inactive{% endif %}</p>
+
+<a href="{% url 'room_list' %}" class="btn btn-outline-primary mt-3">Back to Rooms</a>
+{% endblock %}

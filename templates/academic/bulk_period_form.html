@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Create Periods{% endblock %}
+
+{% block content %}
+<h2>Bulk Create Periods</h2>
+<form method="post" id="bulk-form">
+    {% csrf_token %}
+    <div class="row mb-3">
+        <div class="col">
+            <label for="school" class="form-label">School</label>
+            <select name="school" id="school" class="form-select" required>
+                <option value="">-- Select --</option>
+                {% for school in schools %}
+                <option value="{{ school.id }}">{{ school.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <label for="wing" class="form-label">Wing</label>
+            <select name="wing" id="wing" class="form-select" required>
+                <option value="">-- Select --</option>
+                <option value="Junior">Junior</option>
+                <option value="Middle">Middle</option>
+                <option value="Senior">Senior</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col">
+            <label for="total_periods" class="form-label">Number of periods per day</label>
+            <input type="number" name="total_periods" id="total_periods" class="form-control" min="1" max="15" required>
+        </div>
+        <div class="col">
+            <label for="start_time" class="form-label">Start time</label>
+            <input type="time" name="start_time" id="start_time" class="form-control" required>
+        </div>
+        <div class="col">
+            <label for="default_duration" class="form-label">Default duration (minutes)</label>
+            <input type="number" name="default_duration" id="default_duration" class="form-control" min="1" value="35" required>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <button type="button" class="btn btn-secondary" id="generate-table">Generate Period Table</button>
+    </div>
+
+    <div id="period-table-container"></div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary" id="submit-btn" style="display:none;">Create Periods</button>
+    </div>
+</form>
+
+<script>
+document.getElementById('generate-table').addEventListener('click', function() {
+    const total = parseInt(document.getElementById('total_periods').value);
+    const defaultDur = parseInt(document.getElementById('default_duration').value);
+    const container = document.getElementById('period-table-container');
+    let html = '<h4>Period Details</h4><table class="table table-bordered"><thead><tr><th>Period #</th><th>Type</th><th>Duration (min)</th><th>Special Activity</th><th>Specific Day (optional)</th></tr></thead><tbody>';
+    for (let i = 1; i <= total; i++) {
+        html += `
+            <tr>
+                <td>${i}</td>
+                <td>
+                    <select name="period_type_${i}" class="form-select period-type">
+                        <option value="Normal">Normal</option>
+                        <option value="Assembly">Assembly</option>
+                        <option value="Break">Break</option>
+                        <option value="Lunch">Lunch</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="period_duration_${i}" class="form-control period-duration" value="${defaultDur}" min="1">
+                </td>
+                <td>
+                    <input type="text" name="period_activity_${i}" class="form-control period-activity" placeholder="e.g., MPT, Yoga">
+                </td>
+                <td>
+                    <select name="period_day_${i}" class="form-select period-day">
+                        <option value="">All days</option>
+                        <option value="0">Monday</option>
+                        <option value="1">Tuesday</option>
+                        <option value="2">Wednesday</option>
+                        <option value="3">Thursday</option>
+                        <option value="4">Friday</option>
+                        <option value="5">Saturday</option>
+                    </select>
+                </td>
+            </tr>
+        `;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    document.getElementById('submit-btn').style.display = 'inline-block';
+});
+
+document.getElementById('bulk-form').addEventListener('submit', function(e) {
+    // Gather period data
+    const total = parseInt(document.getElementById('total_periods').value);
+    const periodData = [];
+    for (let i = 1; i <= total; i++) {
+        const type = document.querySelector(`select[name="period_type_${i}"]`).value;
+        const duration = parseInt(document.querySelector(`input[name="period_duration_${i}"]`).value);
+        const activity = document.querySelector(`input[name="period_activity_${i}"]`).value;
+        const day = document.querySelector(`select[name="period_day_${i}"]`).value;
+        periodData.push({
+            period_number: i,
+            type: type,
+            duration: duration,
+            special_activity: activity,
+            day_of_week: day ? parseInt(day) : null,
+        });
+    }
+    // Add hidden field with JSON
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'period_data';
+    input.value = JSON.stringify(periodData);
+    this.appendChild(input);
+});
+</script>
+{% endblock %}

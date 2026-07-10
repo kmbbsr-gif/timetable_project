@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Period {{ object.period_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+    <h1>{{ object.wing }} – Period {{ object.period_number }}</h1>
+    <div>
+        <a href="{% url 'period_update' object.pk %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'period_delete' object.pk %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+
+<p><strong>School:</strong> {{ object.school.name }}</p>
+<p><strong>Start:</strong> {{ object.start_time }}</p>
+<p><strong>End:</strong> {{ object.end_time }}</p>
+<p><strong>Duration:</strong> {{ object.duration_minutes }} min</p>
+<p><strong>Assembly:</strong> {% if object.is_assembly %}✅{% else %}❌{% endif %}</p>
+<p><strong>Lunch:</strong> {% if object.is_lunch %}✅{% else %}❌{% endif %}</p>
+<p><strong>Break:</strong> {% if object.is_break %}✅ ({{ object.break_duration }} min){% else %}❌{% endif %}</p>
+{% if object.day_of_week %}
+    <p><strong>Day:</strong> {{ object.get_day_of_week_display }}</p>
+{% endif %}
+{% if object.special_activity %}
+    <p><strong>Special Activity:</strong> {{ object.special_activity }}</p>
+{% endif %}
+
+<a href="{% url 'period_list' %}" class="btn btn-outline-primary mt-3">Back to Periods</a>
+{% endblock %}

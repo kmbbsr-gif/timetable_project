@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Timetable - {{ class.name }} {{ section.name }}{% endblock %}
+
+{% block content %}
+<h2>{{ class.name }} - {{ section.name }}</h2>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <form method="get" action="{% url 'view_class_timetable' class.id section.id %}" class="d-flex">
+            <input type="date" name="date" class="form-control me-2" value="{{ selected_date }}">
+            <button type="submit" class="btn btn-primary">Show</button>
+        </form>
+    </div>
+    <div class="col-md-8">
+        {% if selected_date %}
+            <h5>Showing timetable for {{ selected_date }} (only {{ days_with_indices.0.1 }})</h5>
+        {% else %}
+            <h5>Showing regular timetable (full week)</h5>
+        {% endif %}
+    </div>
+</div>
+
+<div class="btn-group mb-3 no-print" role="group">
+    <a href="{% url 'export_class_pdf' class.id section.id %}" class="btn btn-danger">PDF</a>
+    <a href="{% url 'export_class_excel' class.id section.id %}" class="btn btn-success">Excel</a>
+    <a href="{% url 'export_class_csv' class.id section.id %}" class="btn btn-info">CSV</a>
+    <button onclick="window.print()" class="btn btn-secondary">Print</button>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Period</th>
+            {% for day_idx, day_name in days_with_indices %}
+                <th>{{ day_name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table %}
+            <tr>
+                <td>
+                    <strong>P{{ row.period.period_number }}</strong>
+                    {% if row.period.start_time %}
+                        <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
+                    {% endif %}
+                </td>
+                {% for cell in row.cells %}
+                    <td>
+                        {% if cell %}
+                            <strong>{{ cell.subject.name }}</strong><br>
+                            <small>{{ cell.teacher.name }}</small>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% empty %}
+            <tr><td colspan="{{ days_with_indices|length|add:1 }}">No periods.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary">Back</a>
+{% endblock %}

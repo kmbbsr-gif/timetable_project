@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+    <h1>{{ object.name }}</h1>
+    <div>
+        <a href="{% url 'subject_update' object.pk %}" class="btn btn-secondary">Edit</a>
+        <a href="{% url 'subject_delete' object.pk %}" class="btn btn-danger">Delete</a>
+    </div>
+</div>
+
+<p><strong>School:</strong> {{ object.school.name }}</p>
+<p><strong>Code:</strong> {{ object.code }}</p>
+<p><strong>Optional:</strong> {% if object.is_optional %}Yes{% else %}No{% endif %}</p>
+<p><strong>Requires Lab:</strong> {% if object.requires_lab %}Yes{% else %}No{% endif %}</p>
+<p><strong>Requires Practical:</strong> {% if object.requires_practical %}Yes{% else %}No{% endif %}</p>
+<p><strong>Min Gap Periods:</strong> {{ object.min_gap_periods }}</p>
+<p><strong>Max Gap Periods:</strong> {{ object.max_gap_periods }}</p>
+<p><strong>Double Period Allowed:</strong> {% if object.default_double_period_allowed %}Yes{% else %}No{% endif %}</p>
+
+<a href="{% url 'subject_list' %}" class="btn btn-outline-primary mt-3">Back to Subjects</a>
+{% endblock %}

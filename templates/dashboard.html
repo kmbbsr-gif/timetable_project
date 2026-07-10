@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Timetable Pro{% endblock %}
+
+{% block content %}
+<!-- ✅ Display messages (success/error) from generator -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Schools</h5>
+                <p class="card-text display-6">{{ school_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Teachers</h5>
+                <p class="card-text display-6">{{ teacher_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Subjects</h5>
+                <p class="card-text display-6">{{ subject_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <h5 class="card-title">Classes</h5>
+                <p class="card-text display-6">{{ class_count }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+    <div class="card text-white bg-info">
+        <div class="card-body">
+            <h5 class="card-title">Avg Teacher Load</h5>
+            <p class="card-text display-6">{{ avg_teacher_load }}</p>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-gear"></i> Generate Timetable</h5>
+                <p class="card-text">Run the scheduling engine to create a conflict‑free timetable.</p>
+                <!-- 🚀 ENABLED: button now triggers the generator via HTMX -->
+                <button class="btn btn-primary"
+                        hx-post="{% url 'generate_timetable' %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-target="#response">
+                    Generate Now
+                </button>
+                <div id="response" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-upload"></i> Import Data</h5>
+                <p class="card-text">Import teachers, subjects, or timetable from Excel/CSV.</p>
+                <a href="#" class="btn btn-secondary">Import</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-download"></i> Export Reports</h5>
+                <p class="card-text">Download timetable, teacher workload, or subject allocation.</p>
+                <a href="#" class="btn btn-secondary">Export</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Teacher Absence{% endblock %}
+
+{% block content %}
+<h2>Manage Teacher Absence</h2>
+
+<!-- Selection Form -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">Select Teacher and Date</div>
+    <div class="card-body">
+        <form method="get" action="{% url 'manage_absence' %}" class="row g-3">
+            <div class="col-md-4">
+                <label for="teacher_id" class="form-label">Teacher</label>
+                <select name="teacher_id" id="teacher_id" class="form-select" required>
+                    <option value="">-- Select --</option>
+                    {% for t in teachers %}
+                        <option value="{{ t.id }}" {% if selected_teacher and selected_teacher.id == t.id %}selected{% endif %}>
+                            {{ t.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" name="date" id="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Load Schedule</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if selected_teacher and selected_date %}
+    <h4>{{ selected_teacher.name }} – {{ selected_date|date:"l, d M Y" }}</h4>
+
+    <form method="post" action="{% url 'manage_absence' %}">
+        {% csrf_token %}
+        <input type="hidden" name="teacher_id" value="{{ selected_teacher.id }}">
+        <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Period</th>
+                    <th>Class</th>
+                    <th>Subject</th>
+                    <th>Substitute Teacher</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in schedule %}
+                    <tr>
+                        <td>P{{ entry.period }}</td>
+                        <td>{{ entry.class_instance.name }} - {{ entry.section.name }}</td>
+                        <td>{{ entry.subject.name }}</td>
+                        <td>
+                            <select name="sub_{{ entry.period }}_{{ entry.class_instance.id }}_{{ entry.section.id }}" class="form-select">
+                                <option value="">-- None --</option>
+                                {% for t in entry.free_teachers %}
+                                    <option value="{{ t.id }}" {% if entry.selected_substitute_id == t.id %}selected{% endif %}>
+                                        {{ t.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">
+                                Free teachers: 
+                                {% for t in entry.free_teachers %}
+                                    {{ t.name }}{% if not forloop.last %}, {% endif %}
+                                {% empty %}
+                                    None
+                                {% endfor %}
+                            </small>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="4" class="text-center">No classes scheduled for this teacher on this day.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-success">Save Substitutions</button>
+        <a href="{% url 'timetable_index' %}" class="btn btn-secondary">Cancel</a>
+        
+        <!-- View Substituted Timetable button – only when selected_teacher exists -->
+        <a href="{% url 'view_teacher_timetable' selected_teacher.id %}?date={{ selected_date|date:'Y-m-d' }}" class="btn btn-info">View Substituted Timetable</a>
+    </form>
+{% endif %}
+
+{% endblock %}
