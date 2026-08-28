@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card glass-card shadow-lg border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <h3 class="fw-bold text-center mb-1">Register School</h3>
+                    <p class="text-muted text-center mb-4">Set up your school account and timetable workspace</p>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger mb-3">
+                            {% for error in form.non_field_errors %}
+                                <div class="small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'register_school' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">School Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">School Code / Identifier</label>
+                            {{ form.school_code }}
+                            {% if form.school_code.errors %}<div class="text-danger small mt-1">{{ form.school_code.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Official UDISE Code</label>
+                            {{ form.udise_code }}
+                            {% if form.udise_code.errors %}<div class="text-danger small mt-1">{{ form.udise_code.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Board Affiliation Number</label>
+                            {{ form.affiliation_no }}
+                            {% if form.affiliation_no.errors %}<div class="text-danger small mt-1">{{ form.affiliation_no.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">School Official Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">School Contact Number</label>
+                            {{ form.contact_number }}
+                            {% if form.contact_number.errors %}<div class="text-danger small mt-1">{{ form.contact_number.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Administrator Name</label>
+                            {{ form.admin_name }}
+                            {% if form.admin_name.errors %}<div class="text-danger small mt-1">{{ form.admin_name.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Admin Login Email</label>
+                            {{ form.admin_email }}
+                            {% if form.admin_email.errors %}<div class="text-danger small mt-1">{{ form.admin_email.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Password</label>
+                            {{ form.password }}
+                            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>{% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-3">
+                            Register School & Continue
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

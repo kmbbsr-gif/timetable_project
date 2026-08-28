@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
-    SubjectListView, SubjectDetailView, SubjectCreateView,
-    SubjectUpdateView, SubjectDeleteView
+    SubjectListView, SubjectDetailView,
+    SubjectCreateView, SubjectUpdateView, SubjectDeleteView
 )
 
 urlpatterns = [

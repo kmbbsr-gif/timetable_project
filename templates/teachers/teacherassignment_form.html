@@ -1,129 +1,781 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ view.title|default:"Teacher Assignment" }}{% endblock %}
+{% block title %}{{ view.title|default:"Teacher Assignment" }} - Timetable Pro{% endblock %}
+
+{% block extra_css %}
+<!-- TomSelect CSS -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-<h2>{{ view.title|default:"Assignment" }}</h2>
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-<form method="post">
-    {% csrf_token %}
-    
-    <div class="row">
-        <div class="col-md-6">
-            <!-- Teacher field with load info -->
-            <div class="mb-3">
-                <label for="{{ form.teacher.id_for_label }}" class="form-label">Teacher</label>
-                {{ form.teacher }}
-                <div id="teacher-load-info" class="form-text text-muted">
-                    Load: <span id="load-display">--</span> / <span id="max-display">--</span> 
-                    (Remaining: <span id="remaining-display">--</span>)
+    /* Floating ambient orbs */
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        max-width: 950px;
+        margin: 0 auto;
+    }
+
+    /* ─── Glass Header ─── */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem 2rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-title i {
+        color: #00d4ff;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+    }
+
+    .glass-body {
+        padding: 2rem;
+    }
+
+    /* ─── Form Elements & Labels ─── */
+    .form-label, label {
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .glass-body input[type="text"],
+    .glass-body input[type="number"],
+    .glass-body select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: #ffffff;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .glass-body input:focus,
+    .glass-body select:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #00d4ff;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    .glass-body option {
+        background: #1e1b4b;
+        color: #ffffff;
+    }
+
+    /* ─── TomSelect Dark Theme Overrides ─── */
+    .ts-wrapper.form-select,
+    .ts-control {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        padding: 0.65rem 1rem !important;
+        box-shadow: none !important;
+    }
+
+    .ts-control .item {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        background: transparent !important;
+    }
+
+    .ts-control input {
+        color: #ffffff !important;
+    }
+
+    .ts-control input::placeholder {
+        color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .ts-dropdown {
+        background-color: #0f172a !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+        color: #ffffff !important;
+        margin-top: 4px !important;
+    }
+
+    .ts-dropdown .option {
+        color: rgba(255, 255, 255, 0.9) !important;
+        padding: 10px 14px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .ts-dropdown .option.active,
+    .ts-dropdown .option:hover {
+        background-color: #4f46e5 !important;
+        color: #ffffff !important;
+    }
+
+    .ts-dropdown .option.selected {
+        background-color: rgba(99, 102, 241, 0.3) !important;
+        color: #a5b4fc !important;
+    }
+
+    /* ─── Instant Reactive Toggle Cards ─── */
+    .toggle-card-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        user-select: none;
+        margin-bottom: 0;
+    }
+
+    .toggle-card-wrapper:hover {
+        border-color: rgba(0, 212, 255, 0.4);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .toggle-card-wrapper:has(input[type="checkbox"]:checked) {
+        background: rgba(0, 212, 255, 0.15);
+        border-color: #00d4ff;
+        box-shadow: 0 0 16px rgba(0, 212, 255, 0.25);
+    }
+
+    .toggle-card-wrapper input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 2.8rem;
+        height: 1.55rem;
+        background-color: rgba(255, 255, 255, 0.2);
+        border: 2px solid transparent;
+        border-radius: 2rem;
+        position: relative;
+        cursor: pointer;
+        outline: none !important;
+        box-shadow: none !important;
+        margin: 0;
+        flex-shrink: 0;
+        transition: background-color 0.15s ease;
+    }
+
+    .toggle-card-wrapper input[type="checkbox"]::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 50%;
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .toggle-card-wrapper input[type="checkbox"]:checked {
+        background-color: #00d4ff !important;
+    }
+
+    .toggle-card-wrapper input[type="checkbox"]:checked::before {
+        transform: translateX(1.25rem);
+    }
+
+    .toggle-card-label {
+        margin-bottom: 0;
+        cursor: pointer;
+        font-size: 0.92rem;
+        color: #ffffff;
+        flex-grow: 1;
+        text-transform: none;
+        letter-spacing: normal;
+    }
+
+    .toggle-card-label strong {
+        display: block;
+        font-size: 0.92rem;
+        color: #ffffff;
+    }
+
+    .toggle-card-label small {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.78rem;
+        display: block;
+        margin-top: 2px;
+    }
+
+    /* ─── Information & Combined Section Cards ─── */
+    .info-panel {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        margin-top: 0.5rem;
+    }
+
+    .warning-panel {
+        background: rgba(245, 158, 11, 0.12);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 14px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Target Section Checkbox Pills */
+    .section-btn-check + .section-label {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85);
+        padding: 0.4rem 0.85rem;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.25s ease;
+        display: inline-block;
+        margin: 0.25rem;
+    }
+
+    .section-btn-check:checked + .section-label {
+        background: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.6);
+        color: #34d399;
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+    }
+
+    /* ─── Glass Buttons ─── */
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff !important;
+        padding: 0.65rem 1.35rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        color: #ffffff !important;
+        transform: translateY(-2px);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important;
+    }
+
+    .load-text {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.82rem;
+    }
+
+    .load-val {
+        color: #00d4ff;
+        font-weight: 700;
+    }
+
+    .load-warn {
+        color: #ff6b6b;
+        font-weight: 700;
+    }
+
+    .glass-alert {
+        background: rgba(239, 68, 68, 0.15);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid">
+        
+        <div class="glass-card">
+            
+            <!-- Header -->
+            <div class="glass-header">
+                <h1 class="glass-title">
+                    {% if object %}
+                        <i class="bi bi-pencil-square"></i> Edit Teacher Assignment
+                    {% else %}
+                        <i class="bi bi-plus-circle"></i> New Teacher Assignment
+                    {% endif %}
+                </h1>
+            </div>
+
+            <!-- Body -->
+            <div class="glass-body">
+
+                <!-- Form Errors -->
+                {% if form.errors or form.non_field_errors %}
+                <div class="alert alert-dismissible fade show glass-alert" role="alert">
+                    <strong class="text-danger"><i class="bi bi-exclamation-triangle-fill"></i> Please correct the following errors:</strong>
+                    <ul class="mb-0 mt-2">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
                 </div>
-                <div id="potential-load-info" class="form-text" style="display:none;">
-                    <span id="potential-load-label">New Load if added: <span id="new-load-display">--</span></span>
-                    <span id="potential-remaining-label"> | New Remaining: <span id="new-remaining-display">--</span></span>
-                    <span id="warning-label" style="color:red; display:none;"> ⚠️ Exceeds max!</span>
-                </div>
+                {% endif %}
+
+                <form method="post" novalidate id="assignmentForm">
+                    {% csrf_token %}
+
+                    <div class="row g-4 mb-3">
+                        <!-- Teacher Select -->
+                        <div class="col-md-6">
+                            <label for="{{ form.teacher.id_for_label }}" class="form-label">
+                                Teacher <span class="text-danger">*</span>
+                            </label>
+                            {{ form.teacher }}
+                            {% if form.teacher.errors %}
+                                <div class="text-danger small mt-1">{{ form.teacher.errors }}</div>
+                            {% endif %}
+                            
+                            <!-- Teacher Load API Display -->
+                            <div id="teacher-load-info" class="info-panel mt-2">
+                                <div class="load-text">
+                                    Current Load: <span id="load-display" class="load-val">--</span> / <span id="max-display" class="load-val">--</span>
+                                    (Remaining: <span id="remaining-display" class="load-val">--</span>)
+                                </div>
+                                <div id="potential-load-info" class="load-text mt-1" style="display:none;">
+                                    <span id="potential-load-label">New Load: <span id="new-load-display" class="load-val">--</span></span>
+                                    <span id="potential-remaining-label"> | New Remaining: <span id="new-remaining-display" class="load-val">--</span></span>
+                                    <span id="warning-label" class="load-warn" style="display:none;"> ⚠️ Exceeds max!</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Class Subject Select -->
+                        <div class="col-md-6" id="single-class-field">
+                            <label for="{{ form.class_subject.id_for_label }}" class="form-label">
+                                Class Subject <span class="text-danger">*</span>
+                            </label>
+                            {{ form.class_subject }}
+                            <small class="text-white-50 d-block mt-1">Shows all sections of the class in brackets.</small>
+                            {% if form.class_subject.errors %}
+                                <div class="text-danger small mt-1">{{ form.class_subject.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Target Sections -->
+                    <div class="mb-4" id="targetSectionsContainer">
+                        <label class="form-label">
+                            <i class="bi bi-check2-square"></i> Target Sections
+                        </label>
+                        <div class="info-panel mb-3 py-2">
+                            <small class="text-white-50">
+                                <i class="bi bi-info-circle text-info"></i> Leave all unchecked to assign to <strong>ALL sections</strong> of this class. Check specific sections to limit the assignment.
+                            </small>
+                        </div>
+                        <div class="d-flex flex-wrap gap-1" id="sectionCheckboxes">
+                            {% for section in form.target_sections.field.queryset %}
+                            <input type="checkbox"
+                                   class="btn-check section-btn-check section-checkbox"
+                                   name="target_sections"
+                                   value="{{ section.pk }}"
+                                   id="sec_{{ section.pk }}"
+                                   data-class-id="{{ section.class_instance_id }}"
+                                   autocomplete="off"
+                                   {% if section.pk in preselected_sections %}checked{% endif %}>
+                            <label class="section-label" for="sec_{{ section.pk }}" data-class-id="{{ section.class_instance_id }}">
+                                {{ section.class_instance.name }} {{ section.name }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                        {% if form.target_sections.errors %}
+                            <div class="text-danger small mt-1">{{ form.target_sections.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Combined / Joint Class Toggle Panel -->
+                    <div class="warning-panel mb-4">
+                        <label class="toggle-card-wrapper mb-2" for="{{ form.is_combined.id_for_label }}">
+                            {{ form.is_combined }}
+                            <span class="toggle-card-label">
+                                <strong class="text-warning"><i class="bi bi-people-fill me-1"></i> Enable Combined / Joint Class</strong>
+                                <small>Enable if this teacher takes multiple sections simultaneously during this period (e.g., Games, Drawing).</small>
+                            </span>
+                        </label>
+
+                        <div id="combinedContainer" style="display: none;" class="mt-3">
+                            <div class="mb-3">
+                                <label for="{{ form.combined_class_subjects.id_for_label }}" class="form-label">
+                                    Combined Class Subjects
+                                </label>
+                                {{ form.combined_class_subjects }}
+                                <small class="text-white-50 d-block mt-1">Hold Ctrl (Cmd) to select multiple sections (e.g., Std 6-A & Std 6-B).</small>
+                                {% if form.combined_class_subjects.errors %}
+                                    <div class="text-danger small mt-1">{{ form.combined_class_subjects.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <label for="{{ form.combined_group_name.id_for_label }}" class="form-label">
+                                    Combined Group Name <span class="text-danger" id="group-name-required" style="display:none;">*</span>
+                                </label>
+                                {{ form.combined_group_name }}
+                                <small class="text-white-50 d-block mt-1">
+                                    Required when combined. Use the same label for all sections sharing one period (e.g. <code>Drawing-Standards</code>).
+                                </small>
+                                {% if form.combined_group_name.errors %}
+                                    <div class="text-danger small mt-1">{{ form.combined_group_name.errors }}</div>
+                                {% endif %}
+                                <div id="group-name-error" class="text-danger small mt-1" style="display:none;">
+                                    Please enter a Combined Group Name.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Weekly Periods, Preference Weight, Primary Teacher -->
+                    <div class="row g-4 mb-4 align-items-center">
+                        <div class="col-md-4">
+                            <label for="{{ form.weekly_periods.id_for_label }}" class="form-label">
+                                Weekly Periods <span class="text-danger">*</span>
+                            </label>
+                            {{ form.weekly_periods }}
+                            {% if form.weekly_periods.errors %}
+                                <div class="text-danger small mt-1">{{ form.weekly_periods.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="{{ form.preference_weight.id_for_label }}" class="form-label">
+                                Preference Weight
+                            </label>
+                            {{ form.preference_weight }}
+                            {% if form.preference_weight.errors %}
+                                <div class="text-danger small mt-1">{{ form.preference_weight.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-4 pt-4">
+                            <label class="toggle-card-wrapper" for="{{ form.is_primary.id_for_label }}">
+                                {{ form.is_primary }}
+                                <span class="toggle-card-label">
+                                    <strong>Primary Teacher</strong>
+                                    <small>Designate as main instructor for this subject</small>
+                                </span>
+                            </label>
+                            {% if form.is_primary.errors %}
+                                <div class="text-danger small mt-1">{{ form.is_primary.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-3 pt-3">
+                        <button type="submit" class="btn-glass">
+                            <i class="bi bi-check-lg"></i> Save Assignment
+                        </button>
+                        <a href="{% url 'teacherassignment_list' %}" class="btn-glass btn-glass-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label for="{{ form.class_subject.id_for_label }}" class="form-label">Class Subject</label>
-                {{ form.class_subject }}
-            </div>
-            <div class="mb-3">
-                <label for="{{ form.weekly_periods.id_for_label }}" class="form-label">Weekly Periods</label>
-                {{ form.weekly_periods }}
-            </div>
-            <div class="mb-3">
-                {{ form.is_primary.label_tag }}
-                {{ form.is_primary }}
-            </div>
-            <div class="mb-3">
-                {{ form.preference_weight.label_tag }}
-                {{ form.preference_weight }}
-            </div>
-        </div>
+
     </div>
+</div>
 
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a href="{% url 'teacherassignment_list' %}" class="btn btn-secondary">Cancel</a>
-</form>
+<!-- TomSelect JS -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const teacherSelect = document.getElementById('id_teacher');
-        const weeklyPeriodsInput = document.getElementById('id_weekly_periods');
-        const loadDisplay = document.getElementById('load-display');
-        const maxDisplay = document.getElementById('max-display');
-        const remainingDisplay = document.getElementById('remaining-display');
-        const potentialLoadInfo = document.getElementById('potential-load-info');
-        const newLoadDisplay = document.getElementById('new-load-display');
-        const newRemainingDisplay = document.getElementById('new-remaining-display');
-        const warningLabel = document.getElementById('warning-label');
+(function() {
+    // --- Elements ---
+    const teacherSelect = document.getElementById('id_teacher');
+    const classSubjectSelect = document.getElementById('id_class_subject');
+    const weeklyPeriodsInput = document.getElementById('id_weekly_periods');
+    const isCombinedCheckbox = document.getElementById('id_is_combined');
+    const combinedContainer = document.getElementById('combinedContainer');
+    const singleClassField = document.getElementById('single-class-field');
+    const targetSectionsContainer = document.getElementById('targetSectionsContainer');
+    const sectionLabels = document.querySelectorAll('.section-label');
+    const sectionCheckboxes = document.querySelectorAll('.section-checkbox');
+    const combinedGroupInput = document.getElementById('id_combined_group_name');
+    const groupNameRequired = document.getElementById('group-name-required');
+    const groupNameError = document.getElementById('group-name-error');
 
-        let currentLoad = 0;
-        let maxLoad = 0;
+    // Load metric elements
+    const loadDisplay = document.getElementById('load-display');
+    const maxDisplay = document.getElementById('max-display');
+    const remainingDisplay = document.getElementById('remaining-display');
+    const potentialLoadInfo = document.getElementById('potential-load-info');
+    const newLoadDisplay = document.getElementById('new-load-display');
+    const newRemainingDisplay = document.getElementById('new-remaining-display');
+    const warningLabel = document.getElementById('warning-label');
 
-        function updateLoad(teacherId) {
-            if (!teacherId) {
-                loadDisplay.textContent = '--';
-                maxDisplay.textContent = '--';
-                remainingDisplay.textContent = '--';
-                potentialLoadInfo.style.display = 'none';
-                return;
-            }
-            fetch(`/teachers/load/${teacherId}/`)
-                .then(response => {
-                    if (!response.ok) throw new Error('Network error');
-                    return response.json();
-                })
-                .then(data => {
-                    currentLoad = data.load;
-                    maxLoad = data.max;
-                    const remaining = data.remaining;
-                    loadDisplay.textContent = currentLoad;
-                    maxDisplay.textContent = maxLoad;
-                    remainingDisplay.textContent = remaining;
-                    updatePotentialLoad();
-                })
-                .catch(err => {
-                    console.error('Error fetching load:', err);
-                    loadDisplay.textContent = 'Error';
-                });
+    let currentLoad = 0;
+    let maxLoad = 0;
+    let tsTeacher, tsClassSubject;
+
+    // --- Tom Select ---
+    if (teacherSelect) {
+        tsTeacher = new TomSelect("#id_teacher", {
+            create: false,
+            sortField: { field: "text", direction: "asc" },
+            placeholder: "Type to search teacher..."
+        });
+    }
+
+    if (classSubjectSelect) {
+        tsClassSubject = new TomSelect("#id_class_subject", {
+            create: false,
+            sortField: null,
+            placeholder: "Type to search class or subject..."
+        });
+    }
+
+    // --- Section Filtering by Selected Class ---
+    function filterSectionsByClass() {
+        const selectedValue = classSubjectSelect ? classSubjectSelect.value : '';
+        if (!selectedValue) {
+            sectionLabels.forEach(label => {
+                label.style.display = 'inline-block';
+                label.previousElementSibling.disabled = false;
+            });
+            return;
         }
+        const selectedOption = Array.from(classSubjectSelect.options).find(opt => opt.value === selectedValue);
+        const text = selectedOption ? selectedOption.text : '';
+        const classNameMatch = text.match(/^(.+?)\s+\[/);
+        const className = classNameMatch ? classNameMatch[1].trim() : text.split('—')[0].trim();
 
-        function updatePotentialLoad() {
-            const periods = parseInt(weeklyPeriodsInput.value) || 0;
-            const newTotal = currentLoad + periods;
-            const newRemaining = maxLoad - newTotal;
-
-            if (periods > 0) {
-                potentialLoadInfo.style.display = 'block';
-                newLoadDisplay.textContent = newTotal;
-                newRemainingDisplay.textContent = newRemaining;
-                if (newTotal > maxLoad) {
-                    warningLabel.style.display = 'inline';
-                } else {
-                    warningLabel.style.display = 'none';
-                }
+        sectionLabels.forEach(label => {
+            if (label.textContent.trim().startsWith(className)) {
+                label.style.display = 'inline-block';
+                label.previousElementSibling.disabled = false;
             } else {
-                potentialLoadInfo.style.display = 'none';
+                label.style.display = 'none';
+                label.previousElementSibling.disabled = true;
+                label.previousElementSibling.checked = false;
             }
-        }
-
-        // Events
-        teacherSelect.addEventListener('change', function() {
-            updateLoad(this.value);
         });
+    }
 
-        weeklyPeriodsInput.addEventListener('input', function() {
-            updatePotentialLoad();
-        });
-
-        // Initial load if teacher pre-selected
-        if (teacherSelect.value) {
-            updateLoad(teacherSelect.value);
+    // --- Combined Mode Toggle ---
+    function toggleCombined() {
+        const isCombined = isCombinedCheckbox && isCombinedCheckbox.checked;
+        if (isCombined) {
+            combinedContainer.style.display = 'block';
+            if (singleClassField) singleClassField.style.display = 'none';
+            targetSectionsContainer.style.opacity = '0.5';
+            targetSectionsContainer.style.pointerEvents = 'none';
+            sectionCheckboxes.forEach(cb => {
+                cb.checked = false;
+                cb.disabled = true;
+            });
+        } else {
+            combinedContainer.style.display = 'none';
+            if (singleClassField) singleClassField.style.display = 'block';
+            targetSectionsContainer.style.opacity = '1';
+            targetSectionsContainer.style.pointerEvents = 'auto';
+            sectionCheckboxes.forEach(cb => {
+                cb.disabled = false;
+            });
+            filterSectionsByClass();
         }
-    });
+        validateCombinedName();
+    }
+
+    // --- Combined Group Name Validation ---
+    function validateCombinedName() {
+        if (isCombinedCheckbox && isCombinedCheckbox.checked) {
+            groupNameRequired.style.display = 'inline';
+            if (combinedGroupInput && !combinedGroupInput.value.trim()) {
+                combinedGroupInput.classList.add('is-invalid');
+                groupNameError.style.display = 'block';
+                return false;
+            } else {
+                if (combinedGroupInput) combinedGroupInput.classList.remove('is-invalid');
+                groupNameError.style.display = 'none';
+                return true;
+            }
+        } else {
+            groupNameRequired.style.display = 'none';
+            if (combinedGroupInput) combinedGroupInput.classList.remove('is-invalid');
+            groupNameError.style.display = 'none';
+            return true;
+        }
+    }
+
+    // --- Teacher Load API ---
+    function updateLoad(teacherId) {
+        if (!teacherId) {
+            loadDisplay.textContent = '--';
+            maxDisplay.textContent = '--';
+            remainingDisplay.textContent = '--';
+            potentialLoadInfo.style.display = 'none';
+            return;
+        }
+        fetch(`/teachers/load/${teacherId}/`)
+            .then(response => {
+                if (!response.ok) throw new Error('Network error');
+                return response.json();
+            })
+            .then(data => {
+                currentLoad = data.load;
+                maxLoad = data.max;
+                loadDisplay.textContent = currentLoad;
+                maxDisplay.textContent = maxLoad;
+                remainingDisplay.textContent = data.remaining;
+                updatePotentialLoad();
+            })
+            .catch(err => {
+                console.error('Error fetching teacher load:', err);
+                loadDisplay.textContent = 'Error';
+            });
+    }
+
+    function updatePotentialLoad() {
+        const periods = parseInt(weeklyPeriodsInput.value) || 0;
+        const newTotal = currentLoad + periods;
+        const newRemaining = maxLoad - newTotal;
+
+        if (periods > 0 && maxLoad > 0) {
+            potentialLoadInfo.style.display = 'block';
+            newLoadDisplay.textContent = newTotal;
+            newRemainingDisplay.textContent = newRemaining;
+            warningLabel.style.display = (newTotal > maxLoad) ? 'inline' : 'none';
+        } else {
+            potentialLoadInfo.style.display = 'none';
+        }
+    }
+
+    // --- Event Listeners ---
+    if (tsTeacher) {
+        tsTeacher.on('change', function(value) {
+            updateLoad(value);
+        });
+    }
+
+    if (tsClassSubject) {
+        tsClassSubject.on('change', filterSectionsByClass);
+    } else if (classSubjectSelect) {
+        classSubjectSelect.addEventListener('change', filterSectionsByClass);
+    }
+
+    if (weeklyPeriodsInput) {
+        weeklyPeriodsInput.addEventListener('input', updatePotentialLoad);
+    }
+
+    if (isCombinedCheckbox) {
+        isCombinedCheckbox.addEventListener('change', toggleCombined);
+    }
+
+    if (combinedGroupInput) {
+        combinedGroupInput.addEventListener('input', validateCombinedName);
+    }
+
+    // Block submit if combined is on but name is missing
+    const form = document.getElementById('assignmentForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (!validateCombinedName()) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (combinedGroupInput) combinedGroupInput.focus();
+            }
+        });
+    }
+
+    // --- Init ---
+    if (classSubjectSelect) filterSectionsByClass();
+    if (isCombinedCheckbox) toggleCombined();
+    if (teacherSelect && teacherSelect.value) updateLoad(teacherSelect.value);
+})();
 </script>
 {% endblock %}

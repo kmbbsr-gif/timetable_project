@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Keshab Sir's Timetable Studio{% endblock %}
+
+{% block content %}
+<style>
+    .login-wrapper {
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .glass-login-card {
+        width: 100%;
+        max-width: 440px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+        position: relative;
+        z-index: 2;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header h2 {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.8rem;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-header p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+    }
+
+    .form-group-custom {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .form-group-custom label {
+        display: block;
+        color: #00d4ff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Fixed cross-browser input styling */
+    .glass-input-box {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.75rem 1rem;
+        background: rgba(20, 20, 35, 0.6) !important; /* Solid dark tint prevents white-on-white autofill */
+        border: 1.5px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        font-size: 0.95rem;
+        outline: none;
+        box-sizing: border-box;
+        transition: all 0.25s ease;
+    }
+
+    .glass-input-box:focus {
+        border-color: #00d4ff !important;
+        background: rgba(25, 25, 45, 0.85) !important;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3) !important;
+    }
+
+    /* Fix Chrome/Safari/Edge autofill overriding colors */
+    .glass-input-box:-webkit-autofill,
+    .glass-input-box:-webkit-autofill:hover, 
+    .glass-input-box:-webkit-autofill:focus {
+        -webkit-text-fill-color: #ffffff !important;
+        -webkit-box-shadow: 0 0 0px 1000px #1a1a2e inset !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+
+    .password-toggle-wrap {
+        position: relative;
+    }
+
+    .toggle-pwd-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.6);
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+    }
+
+    .toggle-pwd-btn:hover {
+        color: #00d4ff;
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 0.85rem;
+        background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+        border: none;
+        border-radius: 12px;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        margin-top: 1rem;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+    }
+</style>
+
+<div class="login-wrapper">
+    <div class="glass-login-card">
+        <div class="login-header">
+            <h2>Sign In</h2>
+            <p>Access your school timetable workspace</p>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-danger rounded-3 py-2 px-3 mb-3 text-sm">
+            Invalid username or password. Please try again.
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+
+            <!-- Username Field -->
+            <div class="form-group-custom">
+                <label for="id_username">Username / Email</label>
+                <input 
+                    type="text" 
+                    name="username" 
+                    id="id_username" 
+                    class="glass-input-box" 
+                    placeholder="Enter your username" 
+                    required 
+                    autocomplete="username"
+                >
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group-custom">
+                <label for="id_password">Password</label>
+                <div class="password-toggle-wrap">
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="id_password" 
+                        class="glass-input-box" 
+                        placeholder="••••••••" 
+                        required 
+                        autocomplete="current-password"
+                    >
+                    <button type="button" class="toggle-pwd-btn" id="togglePasswordBtn" title="Show/Hide Password">
+                        <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Sign In to Workspace
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const passwordInput = document.getElementById('id_password');
+    const toggleIcon = document.getElementById('togglePasswordIcon');
+
+    if (toggleBtn && passwordInput && toggleIcon) {
+        toggleBtn.addEventListener('click', function() {
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            toggleIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    }
+});
+</script>
+{% endblock %}

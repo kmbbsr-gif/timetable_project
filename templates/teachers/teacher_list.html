@@ -1,66 +1,434 @@
 {% extends 'base.html' %}
 
-{% block title %}Teachers{% endblock %}
+{% block title %}Teachers - Timetable Pro{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Teachers</h1>
-    <a href="{% url 'teacher_create' %}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Teacher
-    </a>
-</div>
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    /* Floating ambient orbs */
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    /* ─── Glass Header ─── */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-title i {
+        color: #00d4ff;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+    }
+
+    /* ─── Compact Table Styling ─── */
+    .glass-table-container {
+        padding: 0.75rem 1rem 1rem 1rem;
+        overflow-x: auto;
+    }
+
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 6px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+    }
+
+    .glass-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.75rem 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        white-space: nowrap;
+    }
+
+    .glass-table tbody tr {
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.2s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-table td {
+        padding: 0.6rem 0.6rem;
+        vertical-align: middle;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+    }
+
+    .glass-table td:first-child {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-table td:last-child {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* ─── Column Truncation Rules ─── */
+    .school-cell {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .designation-cell {
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Compact ID Tag */
+    .code-tag {
+        background: rgba(0, 212, 255, 0.12);
+        color: #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        padding: 0.15rem 0.45rem;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    /* Status Badges */
+    .badge-dot {
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .badge-active-dot {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .badge-inactive-dot {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+
+    .badge-off-dot {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .load-badge {
+        background: rgba(99, 102, 241, 0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(165, 180, 252, 0.3);
+        padding: 0.15rem 0.45rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.78rem;
+    }
+
+    /* Glass Buttons & Actions */
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff !important;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.25s ease;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        color: #ffffff !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-glass-icon {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .btn-glass-danger {
+        background: rgba(255, 107, 107, 0.15);
+        border: 1px solid rgba(255, 107, 107, 0.35);
+        color: #ff6b6b !important;
+    }
+
+    .btn-glass-danger:hover {
+        background: rgba(255, 107, 107, 0.3);
+        color: #ffffff !important;
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important;
+    }
+
+    .action-group {
+        display: flex;
+        gap: 0.35rem;
+        align-items: center;
+    }
+
+    /* Glass Alert */
+    .glass-alert {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 1.25rem;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid max-width-lg">
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show glass-alert" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Glass Card -->
+        <div class="glass-card">
+            
+            <!-- Header -->
+            <div class="glass-header">
+                <div>
+                    <h1 class="glass-title">
+                        <i class="bi bi-person-badge"></i> Faculty & Teachers
+                    </h1>
+                    {% if request.school %}
+                        <small style="color: rgba(255, 255, 255, 0.6); font-size: 0.8rem;">
+                            {{ request.school.name }}
+                        </small>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'teacherassignment_list' %}" class="btn-glass btn-glass-secondary">
+                        <i class="bi bi-diagram-3"></i> View Assignments
+                    </a>
+                    <a href="{% url 'teacher_create' %}" class="btn-glass">
+                        <i class="bi bi-plus-circle"></i> Add Teacher
+                    </a>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-table-container">
+                <table class="glass-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>School</th>
+                            <th>Designation</th>
+                            <th>Contact</th>
+                            <th title="Class Teacher">CT</th>
+                            <th title="Class Teacher For">CT For</th>
+                            <th title="Weekly Period Load">Load</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for teacher in teachers %}
+                        <tr>
+                            <td>
+                                <span class="code-tag">{{ teacher.employee_id|default:"-" }}</span>
+                            </td>
+                            <td class="fw-bold" style="color: #ffffff;">
+                                <a href="{% url 'teacher_detail' teacher.pk %}" style="color: #ffffff; text-decoration: none;">
+                                    {{ teacher.name }}
+                                </a>
+                            </td>
+                            
+                            <!-- Truncated School Name with Tooltip -->
+                            <td class="school-cell" title="{{ teacher.school.name|default:'N/A' }}">
+                                {{ teacher.school.name|default:"-" }}
+                            </td>
+                            
+                            <!-- Truncated Designation -->
+                            <td class="designation-cell" title="{{ teacher.designation|default:'Teacher' }}">
+                                {{ teacher.designation|default:"Teacher" }}
+                            </td>
+                            
+                            <!-- Contact Info -->
+                            <td>
+                                {% if teacher.mobile %}
+                                    <a href="tel:{{ teacher.mobile }}" class="text-decoration-none" style="color: rgba(255,255,255,0.85);" title="{{ teacher.mobile }}">
+                                        <i class="bi bi-telephone small text-info"></i> {{ teacher.mobile }}
+                                    </a>
+                                {% elif teacher.email %}
+                                    <a href="mailto:{{ teacher.email }}" class="text-decoration-none" style="color: rgba(255,255,255,0.85);" title="{{ teacher.email }}">
+                                        <i class="bi bi-envelope small text-info"></i> {{ teacher.email|truncatechars:14 }}
+                                    </a>
+                                {% else %}
+                                    <span style="color: rgba(255,255,255,0.4);">-</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Class Teacher Boolean Status -->
+                            <td>
+                                {% if teacher.is_class_teacher %}
+                                    <span class="badge-dot badge-active-dot">● Yes</span>
+                                {% else %}
+                                    <span class="badge-dot badge-off-dot">○ No</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td>{{ teacher.class_teacher_for.name|default:"-" }}</td>
+                            
+                            <!-- Weekly Load -->
+                            <td>
+                                <span class="load-badge">{{ teacher.total_periods|default:0 }} / {{ teacher.max_weekly_load }}p</span>
+                            </td>
+                            
+                            <!-- Active Status -->
+                            <td>
+                                {% if teacher.is_active %}
+                                    <span class="badge-dot badge-active-dot">● Active</span>
+                                {% else %}
+                                    <span class="badge-dot badge-inactive-dot">○ Inactive</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Action Icons -->
+                            <td>
+                                <div class="action-group justify-content-center">
+                                    <a href="{% url 'teacher_detail' teacher.pk %}" class="btn-glass btn-glass-icon" title="View Teacher Profile">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'teacher_update' teacher.pk %}" class="btn-glass btn-glass-secondary btn-glass-icon" title="Edit Teacher">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'teacher_delete' teacher.pk %}" class="btn-glass btn-glass-danger btn-glass-icon" title="Delete Teacher">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-5" style="color: rgba(255, 255, 255, 0.6);">
+                                <i class="bi bi-people display-6 d-block mb-3" style="color: #00d4ff; opacity: 0.5;"></i>
+                                <p class="mb-2">No teachers added yet for this school.</p>
+                                <a href="{% url 'teacher_create' %}" class="btn-glass mt-2">
+                                    <i class="bi bi-plus-circle"></i> Add First Teacher
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
-    {% endfor %}
-{% endif %}
-
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>School</th>
-            <th>Designation</th>
-            <th>Mobile</th>
-            <th>Class Teacher</th>
-            <th>Class Teacher For</th>
-            <th>Weekly Load</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for teacher in teachers %}
-        <tr>
-            <td>{{ teacher.employee_id }}</td>
-            <td>{{ teacher.name }}</td>
-            <td>{{ teacher.school.name }}</td>
-            <td>{{ teacher.designation }}</td>
-            <td>{{ teacher.mobile }}</td>
-            <td>{% if teacher.is_class_teacher %}✅{% else %}❌{% endif %}</td>
-            <td>{{ teacher.class_teacher_for.name|default:"-" }}</td>
-            <td>{{ teacher.total_periods }}</td>
-            <td>
-                {% if teacher.is_active %}
-                    <span class="badge bg-success">Active</span>
-                {% else %}
-                    <span class="badge bg-danger">Inactive</span>
-                {% endif %}
-            </td>
-            <td>
-                <a href="{% url 'teacher_detail' teacher.pk %}" class="btn btn-sm btn-outline-primary">View</a>
-                <a href="{% url 'teacher_update' teacher.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                <a href="{% url 'teacher_delete' teacher.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="8" class="text-center">No teachers added yet.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+    </div>
+</div>
 {% endblock %}

@@ -1,13 +1,338 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ view.title|default:"ClassSubject Form" }}{% endblock %}
+{% block title %}{{ view.title|default:"Class Subject Mapping" }} - Keshab Sir's School Studio{% endblock %}
 
 {% block content %}
-<h2>{{ view.title|default:"Assignment" }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a href="{% url 'classsubject_list' %}" class="btn btn-secondary">Cancel</a>
-</form>
+<style>
+    .form-section {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        overflow: hidden;
+        background: white;
+        animation: slideUp 0.5s ease-out;
+    }
+    .section-header {
+        padding: 24px 32px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .section-body {
+        padding: 36px;
+        background: #fff;
+    }
+    .form-floating-custom {
+        position: relative;
+        margin-bottom: 28px;
+    }
+    .form-floating-custom:last-child {
+        margin-bottom: 0;
+    }
+    .form-floating-custom label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    .form-floating-custom input[type="text"],
+    .form-floating-custom input[type="number"],
+    .form-floating-custom select {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.25s ease;
+        background: #f8fafc;
+        color: #1e293b;
+        outline: none;
+    }
+    .form-floating-custom input:focus,
+    .form-floating-custom select:focus {
+        border-color: #4f46e5;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+        transform: translateY(-1px);
+    }
+    .error-text {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        padding: 8px 12px;
+        background: #fef2f2;
+        border-radius: 8px;
+        border-left: 3px solid #dc2626;
+    }
+    .page-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 36px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 40px rgba(79, 70, 229, 0.35);
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header h1 {
+        font-weight: 800;
+        margin: 0;
+        font-size: 1.7rem;
+    }
+    .page-header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border: none;
+        padding: 14px 36px;
+        font-weight: 700;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(79, 70, 229, 0.45);
+        transition: all 0.3s ease;
+        color: white;
+        font-size: 0.95rem;
+    }
+    .btn-save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(79, 70, 229, 0.6);
+        filter: brightness(1.1);
+        color: white;
+    }
+    .btn-cancel {
+        padding: 14px 30px;
+        border-radius: 14px;
+        font-weight: 700;
+        border: 2px solid #e2e8f0;
+        color: #64748b;
+        background: white;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        font-size: 0.95rem;
+    }
+    .btn-cancel:hover {
+        border-color: #94a3b8;
+        color: #475569;
+        background: #f8fafc;
+    }
+    .action-bar {
+        background: white;
+        padding: 24px 32px;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-top: 28px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+    .form-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+    }
+    .flag-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+    }
+    .flag-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 18px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        gap: 10px;
+        flex: 1;
+        min-width: 200px;
+    }
+    .flag-item input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        accent-color: #4f46e5;
+        cursor: pointer;
+    }
+    .flag-item label {
+        margin-bottom: 0;
+        cursor: pointer;
+        font-size: 0.95rem;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    .hint-text {
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @media (max-width: 768px) {
+        .page-header { padding: 24px; }
+        .section-body { padding: 24px; }
+        .action-bar { flex-direction: column; align-items: stretch; }
+        .form-row-2, .form-row-3 { grid-template-columns: 1fr; gap: 0; }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="page-header">
+        <h1>📚 {{ view.title|default:"Class-Subject Mapping" }}</h1>
+        <p>Assign curriculum subjects to class standards and configure weekly quota</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger rounded-4 border-0 mb-4 shadow-sm">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-10">
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="bi bi-diagram-3"></i> Mapping Configuration
+                    </div>
+                    <div class="section-body">
+                        <!-- Class and Subject Selection -->
+                        <div class="form-row-2">
+                            <div class="form-floating-custom">
+                                <label for="{{ form.class_instance.id_for_label }}">
+                                    {{ form.class_instance.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.class_instance }}
+                                {% if form.class_instance.errors %}
+                                    <div class="error-text">⚠ {{ form.class_instance.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.subject.id_for_label }}">
+                                    {{ form.subject.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.subject }}
+                                {% if form.subject.errors %}
+                                    <div class="error-text">⚠ {{ form.subject.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Periods and Consecutive Rules -->
+                        <div class="form-row-2">
+                            <div class="form-floating-custom">
+                                <label for="{{ form.weekly_periods.id_for_label }}">
+                                    Weekly Periods Required <span class="text-danger">*</span>
+                                </label>
+                                {{ form.weekly_periods }}
+                                <div class="hint-text">
+                                    <span>ℹ️</span> Number of periods per week for this subject.
+                                </div>
+                                {% if form.weekly_periods.errors %}
+                                    <div class="error-text">⚠ {{ form.weekly_periods.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.consecutive_allowed.id_for_label }}">
+                                    Max Consecutive Periods Allowed
+                                </label>
+                                {{ form.consecutive_allowed }}
+                                <div class="hint-text">
+                                    <span>ℹ️</span> Default is 1 period back-to-back unless specified.
+                                </div>
+                                {% if form.consecutive_allowed.errors %}
+                                    <div class="error-text">⚠ {{ form.consecutive_allowed.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Pedagogical & Lab Flags -->
+                        <div class="form-floating-custom mb-0">
+                            <label>Period & Facility Requirements</label>
+                            <div class="flag-group">
+                                {% if form.double_period_allowed %}
+                                <div class="flag-item">
+                                    {{ form.double_period_allowed }}
+                                    <label for="{{ form.double_period_allowed.id_for_label }}">
+                                        Double Period Allowed
+                                    </label>
+                                </div>
+                                {% endif %}
+
+                                {% if form.practical_required %}
+                                <div class="flag-item">
+                                    {{ form.practical_required }}
+                                    <label for="{{ form.practical_required.id_for_label }}">
+                                        Practical Session
+                                    </label>
+                                </div>
+                                {% endif %}
+
+                                {% if form.lab_required %}
+                                <div class="flag-item">
+                                    {{ form.lab_required }}
+                                    <label for="{{ form.lab_required.id_for_label }}">
+                                        Requires Laboratory
+                                    </label>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <button type="submit" class="btn btn-save">
+                        <span>💾</span> Save Mapping
+                    </button>
+                    <a href="{% url 'classsubject_list' %}" class="btn btn-cancel">
+                        <span>←</span> Cancel
+                    </a>
+                    {% if object %}
+                        <small class="text-muted ms-auto">Mapping ID: #{{ object.id }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 {% endblock %}

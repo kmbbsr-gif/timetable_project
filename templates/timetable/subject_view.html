@@ -4,12 +4,15 @@
 
 {% block content %}
 <h2>{{ subject.name }} ({{ subject.code }})</h2>
+
+<!-- Export buttons -->
 <div class="btn-group mb-3 no-print" role="group">
     <a href="{% url 'export_subject_pdf' subject.id %}" class="btn btn-danger">PDF</a>
     <a href="{% url 'export_subject_excel' subject.id %}" class="btn btn-success">Excel</a>
     <a href="{% url 'export_subject_csv' subject.id %}" class="btn btn-info">CSV</a>
     <button onclick="window.print()" class="btn btn-secondary">Print</button>
 </div>
+
 <table class="table table-bordered table-striped">
     <thead>
         <tr>
@@ -28,12 +31,18 @@
                         <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
                     {% endif %}
                 </td>
+                <!-- Colour‑coded cell -->
                 {% for cell_list in row.cells %}
-                    <td>
+                    <td style="background-color: {{ subject.color }}20; border-left: 4px solid {{ subject.color }};">
                         {% if cell_list %}
                             {% for entry in cell_list %}
-                                <strong>{{ entry.class_instance.name }} {{ entry.section.name }}</strong><br>
-                                <small>{{ entry.teacher.name }}</small>
+                                <div style="color: {{ subject.color }};">
+                                    <strong>{{ entry.class_instance.name }} {{ entry.section.name }}</strong><br>
+                                    <small>{{ entry.teacher.name }}</small>
+                                    {% if entry.room %}
+                                        <br><small>Room: {{ entry.room.name }}</small>
+                                    {% endif %}
+                                </div>
                                 {% if not forloop.last %}<hr>{% endif %}
                             {% endfor %}
                         {% endif %}
@@ -45,5 +54,6 @@
         {% endfor %}
     </tbody>
 </table>
+
 <a href="{% url 'subject_timetable_index' %}" class="btn btn-secondary">Back</a>
 {% endblock %}

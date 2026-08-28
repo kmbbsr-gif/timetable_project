@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ room.name }} - Timetable{% endblock %}
+
+{% block content %}
+<h2>{{ room.name }} ({{ room.type }})</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Period</th>
+            {% for day_idx, day_name in days_with_indices %}
+                <th>{{ day_name }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table %}
+            <tr>
+                <td>
+                    <strong>P{{ row.period.period_number }}</strong>
+                    {% if row.period.start_time and row.period.end_time %}
+                        <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
+                    {% elif row.period.start_time %}
+                        <br><small>{{ row.period.start_time|time:"H:i" }}</small>
+                    {% endif %}
+                </td>
+                {% for cell in row.cells %}
+                    <td style="{% if cell %}background-color: {{ cell.subject.color }}20; border-left: 4px solid {{ cell.subject.color }};{% endif %}">
+                        {% if cell %}
+                            <strong style="color: {{ cell.subject.color }};">{{ cell.class_instance.name }} {{ cell.section.name }}</strong><br>
+                            <small>{{ cell.subject.name }} – {{ cell.teacher.name }}</small>
+                        {% endif %}
+                    </td>
+                {% endfor %}
+            </tr>
+        {% empty %}
+            <tr><td colspan="{{ days_with_indices|length|add:1 }}">No periods.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'room_timetable_index' %}" class="btn btn-secondary">Back</a>
+{% endblock %}

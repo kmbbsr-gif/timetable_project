@@ -1,72 +1,601 @@
 {% extends 'base.html' %}
 
-{% block title %}Teacher-Subject Assignments{% endblock %}
+{% block title %}Teacher-Subject Assignments - Timetable Pro{% endblock %}
+
+{% block extra_css %}
+<!-- TomSelect CSS for searchable filter dropdown -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">Teacher-Subject Assignments</h1>
-    <a href="{% url 'teacherassignment_create' %}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Add Assignment
-    </a>
-</div>
-<div class="alert alert-info">
-    <strong>Total required periods per week:</strong> {{ total_required }}
-    &nbsp;|&nbsp;
-    <strong>Assigned:</strong> {{ total_assigned }}
-    &nbsp;|&nbsp;
-    <strong>Remaining to assign:</strong> {{ total_remaining }}
-    &nbsp;|&nbsp;
-    <strong>Teaching slots (excluding breaks/assembly):</strong> {{ teaching_slots }}
-    &nbsp;|&nbsp;
-    <strong>Total slots (incl. breaks):</strong> {{ total_slots }}
-    <strong>Teaching slots (excluding breaks/assembly):</strong> {{ teaching_slots }}
-    &nbsp;|&nbsp;
-    <strong>Active teachers:</strong> {{ active_teacher_count }}
-    &nbsp;|&nbsp;
-    <strong>Average periods per teacher:</strong> {{ average_per_teacher }}
-</div>
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    /* Floating ambient orbs */
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    /* ─── Glass Header ─── */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.25rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-title i {
+        color: #00d4ff;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+    }
+
+    /* ─── Filter & Sorting Bar ─── */
+    .glass-filter-bar {
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 1rem 1.5rem;
+    }
+
+    .filter-label {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* ─── TomSelect Glass Styling Overrides ─── */
+    .ts-control {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+        color: #ffffff !important;
+        padding: 0.45rem 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+
+    .ts-control input {
+        color: #ffffff !important;
+    }
+
+    .ts-dropdown {
+        background: #1e1b4b !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 10px !important;
+        color: #ffffff !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .ts-dropdown .option {
+        color: rgba(255, 255, 255, 0.85) !important;
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    .ts-dropdown .option.active, .ts-dropdown .option:hover {
+        background: rgba(0, 212, 255, 0.2) !important;
+        color: #ffffff !important;
+    }
+
+    /* ─── Summary Stats Grid ─── */
+    .stats-container {
+        padding: 1rem 1.5rem;
+        background: rgba(0, 0, 0, 0.15);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-pill {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 0.5rem 0.75rem;
+        display: inline-flex;
+        flex-direction: column;
+        min-width: 130px;
+    }
+
+    .stat-pill-label {
+        font-size: 0.68rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: #00d4ff;
+        letter-spacing: 0.05em;
+    }
+
+    .stat-pill-value {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
+
+    /* ─── Glass Buttons ─── */
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff !important;
+        padding: 0.5rem 1rem;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 0.85rem;
+        transition: all 0.25s ease;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        color: #ffffff !important;
+        transform: translateY(-1px);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important;
+    }
+
+    .btn-glass-secondary.active {
+        background: rgba(0, 212, 255, 0.25);
+        border-color: rgba(0, 212, 255, 0.6);
+        color: #ffffff !important;
+        box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+    }
+
+    .btn-glass-icon {
+        padding: 0.35rem 0.55rem;
+        font-size: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .btn-glass-danger {
+        background: rgba(255, 107, 107, 0.15);
+        border: 1px solid rgba(255, 107, 107, 0.35);
+        color: #ff6b6b !important;
+    }
+
+    .btn-glass-danger:hover {
+        background: rgba(255, 107, 107, 0.3);
+        color: #ffffff !important;
+    }
+
+    .btn-glass-sm {
+        padding: 0.3rem 0.65rem;
+        font-size: 0.78rem;
+        border-radius: 8px;
+    }
+
+    /* ─── Compact Table Styling ─── */
+    .glass-table-container {
+        padding: 0.75rem 1rem 1rem 1rem;
+        overflow-x: auto;
+    }
+
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 6px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.85rem;
+    }
+
+    .glass-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0.75rem 0.6rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        white-space: nowrap;
+    }
+
+    .glass-table tbody tr {
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.2s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-table td {
+        padding: 0.6rem 0.6rem;
+        vertical-align: middle;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        white-space: nowrap;
+    }
+
+    .glass-table td:first-child {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-table td:last-child {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* Column Squeezing Rules */
+    .teacher-cell {
+        font-weight: 600;
+        color: #ffffff;
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .class-cell {
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .subject-cell {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Badges & Pills */
+    .badge-dot {
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .badge-active-dot {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .badge-off-dot {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .load-badge {
+        background: rgba(0, 212, 255, 0.12);
+        color: #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        padding: 0.15rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .capacity-badge {
+        background: rgba(99, 102, 241, 0.15);
+        color: #a5b4fc;
+        border: 1px solid rgba(165, 180, 252, 0.3);
+        padding: 0.15rem 0.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .weight-tag {
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 0.15rem 0.45rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.78rem;
+    }
+
+    .action-group {
+        display: flex;
+        gap: 0.35rem;
+        align-items: center;
+    }
+
+    /* Alert Override */
+    .glass-alert {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 1.25rem;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid max-width-lg">
+        
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show glass-alert" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Glass Card -->
+        <div class="glass-card">
+            
+            <!-- Header -->
+            <div class="glass-header">
+                <h1 class="glass-title">
+                    <i class="bi bi-person-workspace"></i> Teacher-Subject Assignments
+                </h1>
+                <a href="{% url 'teacherassignment_create' %}" class="btn-glass">
+                    <i class="bi bi-plus-circle"></i> Add Assignment
+                </a>
+            </div>
+
+            <!-- Teacher Filter & Sorting Bar -->
+            <div class="glass-filter-bar">
+                <div class="row align-items-center g-3">
+                    <div class="col-md-5">
+                        <form method="get" action="{% url 'teacherassignment_list' %}" id="teacher-filter-form" class="d-flex align-items-center gap-2">
+                            {% if request.GET.sort %}
+                                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <select name="teacher_id" id="teacher-filter-select" placeholder="Select or type teacher name...">
+                                    <option value="">-- All Teachers --</option>
+                                    {% for t in teachers %}
+                                        <option value="{{ t.id }}" {% if t.id|stringformat:"s" == selected_teacher_id %}selected{% endif %}>
+                                            {{ t.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if selected_teacher_id %}
+                                <a href="{% url 'teacherassignment_list' %}{% if request.GET.sort %}?sort={{ request.GET.sort }}{% endif %}" class="btn-glass btn-glass-secondary btn-glass-sm">Clear</a>
+                            {% endif %}
+                        </form>
+                    </div>
+
+                    <div class="col-md-7 text-md-end">
+                        <span class="filter-label me-2"><i class="bi bi-funnel"></i> Sort by:</span>
+                        <a href="?sort=teacher{% if selected_teacher_id %}&teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-secondary btn-glass-sm {% if request.GET.sort == 'teacher' %}active{% endif %}">
+                            <i class="bi bi-sort-alpha-down"></i> Teacher
+                        </a>
+                        <a href="?sort=subject{% if selected_teacher_id %}&teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-secondary btn-glass-sm {% if request.GET.sort == 'subject' %}active{% endif %}">
+                            <i class="bi bi-sort-alpha-down"></i> Subject
+                        </a>
+                        <a href="?sort=class{% if selected_teacher_id %}&teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-secondary btn-glass-sm {% if request.GET.sort == 'class' %}active{% endif %}">
+                            <i class="bi bi-sort-alpha-down"></i> Class
+                        </a>
+                        <a href="?{% if selected_teacher_id %}teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-secondary btn-glass-sm {% if not request.GET.sort %}active{% endif %}">
+                            <i class="bi bi-arrow-counterclockwise"></i> Default
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Overview Bar -->
+            <div class="stats-container">
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Required / Wk</span>
+                        <span class="stat-pill-value">{{ total_required }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Assigned</span>
+                        <span class="stat-pill-value text-info">{{ total_assigned }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Remaining</span>
+                        <span class="stat-pill-value text-warning">{{ total_remaining }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Teaching Slots</span>
+                        <span class="stat-pill-value">{{ teaching_slots }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Total Slots</span>
+                        <span class="stat-pill-value">{{ total_slots }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Active Teachers</span>
+                        <span class="stat-pill-value text-success">{{ active_teacher_count }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Avg Capacity</span>
+                        <span class="stat-pill-value">{{ average_per_teacher }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Req. Avg / Tchr</span>
+                        <span class="stat-pill-value">{{ required_avg_per_teacher }}</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="stat-pill-label">Assigned Avg</span>
+                        <span class="stat-pill-value">{{ assigned_avg_per_teacher }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-table-container">
+                <table class="glass-table">
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            <th>Class</th>
+                            <th>Subject</th>
+                            <th title="Weekly Periods">Periods</th>
+                            <th title="Primary Teacher">Primary</th>
+                            <th title="Preference Weight">Weight</th>
+                            <th title="Teacher Load / Capacity">Load / Max</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ass in assignments %}
+                        <tr>
+                            <!-- Teacher Name -->
+                            <td class="teacher-cell" title="{{ ass.teacher.name }}">
+                                {{ ass.teacher.name }}
+                            </td>
+
+                            <!-- Class Name -->
+                            <td class="class-cell" title="{{ ass.class_subject.class_instance.name }}">
+                                {{ ass.class_subject.class_instance.name }}
+                            </td>
+
+                            <!-- Subject Name -->
+                            <td class="subject-cell" title="{{ ass.class_subject.subject.name }}">
+                                {{ ass.class_subject.subject.name }}
+                            </td>
+
+                            <!-- Weekly Periods -->
+                            <td>
+                                <span class="load-badge">{{ ass.weekly_periods }} p/w</span>
+                            </td>
+
+                            <!-- Is Primary Teacher -->
+                            <td>
+                                {% if ass.is_primary %}
+                                    <span class="badge-dot badge-active-dot">● Yes</span>
+                                {% else %}
+                                    <span class="badge-dot badge-off-dot">○ No</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Weight -->
+                            <td>
+                                <span class="weight-tag">w: {{ ass.preference_weight }}</span>
+                            </td>
+
+                            <!-- Teacher Load / Max Capacity -->
+                            <td>
+                                <span class="capacity-badge">{{ ass.teacher_load }} / {{ ass.teacher_max }}</span>
+                            </td>
+
+                            <!-- Compact Icon Action Group -->
+                            <td>
+                                <div class="action-group justify-content-center">
+                                    <a href="{% url 'teacherassignment_detail' ass.pk %}{% if selected_teacher_id %}?teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-icon" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'teacherassignment_update' ass.pk %}{% if selected_teacher_id %}?teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-secondary btn-glass-icon" title="Edit Assignment">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'teacherassignment_delete' ass.pk %}{% if selected_teacher_id %}?teacher_id={{ selected_teacher_id }}{% endif %}" class="btn-glass btn-glass-danger btn-glass-icon" title="Delete Assignment">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4" style="color: rgba(255, 255, 255, 0.5);">
+                                No assignments found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
         </div>
-    {% endfor %}
-{% endif %}
+    </div>
+</div>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Teacher</th>
-            <th>Class</th>
-            <th>Subject</th>
-            <th>Weekly Periods</th>
-            <th>Primary</th>
-            <th>Weight</th>
-            <th>Actions</th>
-            <th>Teacher Load</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for ass in assignments %}
-        <tr>
-            <td>{{ ass.teacher.name }}</td>
-            <td>{{ ass.class_subject.class_instance.name }}</td>
-            <td>{{ ass.class_subject.subject.name }}</td>
-            <td>{{ ass.weekly_periods }}</td>
-            <td>{% if ass.is_primary %}✅{% else %}❌{% endif %}</td>
-            <td>{{ ass.preference_weight }}</td>
-            <td>
-                <a href="{% url 'teacherassignment_detail' ass.pk %}" class="btn btn-sm btn-outline-primary">View</a>
-                <a href="{% url 'teacherassignment_update' ass.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                <a href="{% url 'teacherassignment_delete' ass.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
-            </td>
-            <td>{{ ass.teacher_load }} / {{ ass.teacher_max }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="8" class="text-center">No assignments yet.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!-- TomSelect JS -->
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ts = new TomSelect('#teacher-filter-select', {
+            create: false,
+            sortField: { field: "text", direction: "asc" },
+            onChange: function(value) {
+                document.getElementById('teacher-filter-form').submit();
+            }
+        });
+    });
+</script>
 {% endblock %}

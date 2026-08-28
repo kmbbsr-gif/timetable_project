@@ -40,12 +40,14 @@ class TimetableEntry(models.Model):
     section = models.ForeignKey(Section, on_delete=models.CASCADE)
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)   # only once
     day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES)
     period_number = models.PositiveSmallIntegerField()
     is_double = models.BooleanField(default=False)
     is_practical = models.BooleanField(default=False)
-
+    is_fixed = models.BooleanField(default=False)   # <-- add this
+    is_combined = models.BooleanField(default=False, help_text="True if this period is shared with another section/class")
+    combined_group_id = models.CharField(max_length=50, blank=True, null=True, help_text="Unique ID pairing joint sections together")
     class Meta:
         unique_together = ['school', 'session', 'class_instance', 'section', 'day_of_week', 'period_number']
         indexes = [
@@ -71,5 +73,15 @@ class SubstituteAssignment(models.Model):
 
     class Meta:
         unique_together = ['absent_teacher', 'date', 'period_number', 'class_instance', 'section']
+# apps/timetable/models.py
+class TimetableVersion(models.Model):
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE)
+    version = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['school', 'session']
+    def __str__(self):
+        return f"{self.school.name} - {self.session.name} - {self.version}"                                  
         
         

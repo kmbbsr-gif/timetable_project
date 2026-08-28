@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Class Schedule Summary{% endblock %}
+
+{% block content %}
+<h2>Class Schedule Summary</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Class</th>
+            <th>Section</th>
+            <th>Teaching Slots (Weekly)</th>
+            <th>Non-Teaching (Weekly)</th>
+            <th>Assigned (Planned)</th>
+            <th>Scheduled (Actual)</th>
+            <th>Free Slots (Weekly)</th>
+            <th>Mismatch</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in data %}
+        <tr>
+            <td>{{ item.class.name }}</td>
+            <td>{{ item.section.name }}</td>
+            <td>{{ item.total_teaching_weekly }}</td>
+            <td>{{ item.non_teaching_weekly }}</td>
+            <td>{{ item.total_assigned }}</td>
+            <td>{{ item.scheduled_count }}</td>
+            <td>{{ item.free_slots_weekly }}</td>
+            <td>{{ item.mismatch }}</td>
+            <td>
+                <a href="{% url 'class_summary_detail' item.class.id item.section.id %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> View Details
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %}

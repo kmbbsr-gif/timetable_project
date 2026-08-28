@@ -7,12 +7,12 @@
     .timetable-cell {
         min-width: 70px;
         min-height: 60px;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, border 0.2s;
         vertical-align: middle;
     }
     .timetable-cell.dragover-highlight {
         background-color: #cce5ff !important;
-        border: 2px solid #007bff;
+        border: 2px dashed #007bff !important;
     }
     .timetable-cell .entry {
         cursor: grab;
@@ -41,6 +41,78 @@
     .list-group-item-action:hover {
         background-color: #f8f9fa;
     }
+    .teacher-list-sidebar {
+        position: fixed;
+        right: 0;
+        top: 60px;
+        width: 250px;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        background: #f8f9fa;
+        border-left: 1px solid #dee2e6;
+        padding: 10px;
+        z-index: 1000;
+    }
+    .teacher-item {
+        padding: 6px 8px;
+        margin-bottom: 4px;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        cursor: grab;
+        transition: background 0.2s;
+    }
+    .teacher-item:hover {
+        background: #e9ecef;
+    }
+    .teacher-item:active {
+        cursor: grabbing;
+    }
+    .teacher-item .subject-badge {
+        font-size: 0.7rem;
+        background: #007bff;
+        color: white;
+        padding: 1px 6px;
+        border-radius: 10px;
+        margin-left: 5px;
+    }
+    #floating-error-toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 1090;
+        max-width: 420px;
+        min-width: 320px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(220, 53, 69, 0.25);
+        border-left: 6px solid #dc3545 !important;
+        border-radius: 14px;
+        box-shadow: 0 12px 32px rgba(220, 53, 69, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(140%) scale(0.95);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
+                    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), 
+                    visibility 0.45s;
+    }
+    #floating-error-toast.show-toast {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    .toast-icon-wrapper {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(220, 53, 69, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #dc3545;
+        flex-shrink: 0;
+    }
 </style>
 {% endblock %}
 
@@ -51,7 +123,67 @@
     <span id="mode-indicator" class="badge bg-secondary">Read‑only</span>
 </h2>
 
-<!-- Export Buttons -->
+<div class="alert alert-info" role="alert">
+    <strong>Total required periods per week:</strong> {{ total_required }}
+    &nbsp;|&nbsp;
+    <strong>Assigned:</strong> {{ total_assigned }}
+    &nbsp;|&nbsp;
+    <strong>Remaining to assign:</strong> {{ total_remaining }}
+    &nbsp;|&nbsp;
+    <strong>Teaching slots (excluding breaks/assembly):</strong> {{ teaching_slots }}
+    &nbsp;|&nbsp;
+    <strong>Total slots (incl. breaks):</strong> {{ total_slots }}
+    &nbsp;|&nbsp;
+    <strong>Active teachers:</strong> {{ active_teacher_count }}
+    &nbsp;|&nbsp;
+    <strong>Average capacity per teacher:</strong> {{ average_per_teacher }}
+    &nbsp;|&nbsp;
+    <strong>Required avg/teacher:</strong> {{ required_avg_per_teacher }}
+    &nbsp;|&nbsp;
+    <strong>Assigned avg/teacher:</strong> {{ assigned_avg_per_teacher }}
+</div>
+
+<div class="teacher-list-sidebar">
+    <h6 class="text-center fw-bold">Teachers Deck</h6>
+    <p class="small text-muted text-center mb-2">Drag a teacher into an empty slot to assign.</p>
+
+    <div class="card mb-3 border-warning bg-warning-subtle">
+        <div class="card-body p-2 text-center">
+            <div class="form-check form-switch d-inline-block text-start">
+                <input class="form-check-input" type="checkbox" id="combined-class-toggle">
+                <label class="form-check-label fw-bold text-dark small ms-1" for="combined-class-toggle">
+                    Combined Class Mode
+                </label>
+            </div>
+            <div class="text-muted" style="font-size: 0.7rem;">
+                Enable to allow teacher multi-class joint periods
+            </div>
+        </div>
+    </div>
+
+    <div id="trash-zone" 
+         class="p-3 mb-3 border border-2 border-danger border-dashed rounded text-center bg-danger-subtle text-danger"
+         style="transition: all 0.2s ease;">
+        <i class="bi bi-trash fs-4 d-block mb-1"></i>
+        <strong class="small d-block">Drop Here to Remove</strong>
+        <span class="text-muted" style="font-size: 0.75rem;">Clears assignment from cell</span>
+    </div>
+
+    <div id="teacher-list">
+        {% for teacher in teacher_list %}
+            <div class="teacher-item"
+                 draggable="true"
+                 data-teacher-id="{{ teacher.id }}"
+                 data-teacher-name="{{ teacher.name }}"
+                 data-subjects="{{ teacher.subjects|join:',' }}">
+                <strong>{{ teacher.name }}</strong>
+                <span class="subject-badge">{{ teacher.subjects|first|default:"General" }}</span>
+                <br><small class="text-muted">{{ teacher.subjects|join:", " }}</small>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
 <div class="btn-group mb-3 no-print" role="group">
     <a href="{% url 'export_pdf' %}" class="btn btn-danger">PDF</a>
     <a href="{% url 'export_excel' %}" class="btn btn-success">Excel</a>
@@ -59,15 +191,15 @@
     <button onclick="window.print()" class="btn btn-secondary">Print</button>
 </div>
 
-<div id="master-container">
+<div id="master-container" class="pe-md-5">
     {% for item in data %}
-        <h4>{{ item.class.name }} - {{ item.section.name }}</h4>
-        <table class="table table-bordered table-sm" 
+        <h4 class="mt-3 fw-bold text-dark">{{ item.class.name }} - {{ item.section.name }}</h4>
+        <table class="table table-bordered table-sm align-middle" 
                data-class-id="{{ item.class.id }}" 
                data-section-id="{{ item.section.id }}">
-            <thead>
+            <thead class="table-light text-center">
                 <tr>
-                    <th>Period</th>
+                    <th style="width: 10%;">Period</th>
                     {% for day_idx, day_name in days_with_indices %}
                         <th>{{ day_name|slice:":3" }}</th>
                     {% endfor %}
@@ -76,24 +208,37 @@
             <tbody>
                 {% for row in item.table %}
                     <tr>
-                        <td>
+                        <td class="text-center bg-light">
                             <strong>P{{ row.period.period_number }}</strong>
                             {% if row.period.start_time %}
-                                <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
+                                <br><small class="text-muted">{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
                             {% endif %}
                         </td>
                         {% for cell in row.cells %}
-                            <td class="timetable-cell" 
+                            <td class="timetable-cell text-center position-relative" 
                                 data-class-id="{{ item.class.id }}"
                                 data-section-id="{{ item.section.id }}"
                                 data-day="{{ forloop.counter0 }}"
                                 data-period="{{ row.period.period_number }}"
                                 data-entry-id="{% if cell %}{{ cell.id }}{% endif %}"
-                                draggable="false">
+                                style="{% if cell %}background-color: {{ cell.subject.color }}20; border-left: 4px solid {{ cell.subject.color }};{% endif %}">
                                 {% if cell %}
-                                    <div class="entry" data-entry-id="{{ cell.id }}">
+                                    <div class="entry position-relative {% if cell.is_combined %}border border-2 border-warning bg-warning-subtle{% endif %}" 
+                                         data-entry-id="{{ cell.id }}" 
+                                         style="color: {{ cell.subject.color }};">
+                                        {% if cell.is_combined %}
+                                            <span class="badge bg-warning text-dark position-absolute top-0 start-0 p-1" style="font-size: 0.55rem; border-bottom-right-radius: 4px;">COMBINED</span>
+                                        {% endif %}
+                                        <button type="button" 
+                                                class="btn-close position-absolute top-0 end-0 p-1 me-1 mt-1 remove-entry-btn" 
+                                                style="font-size: 0.65rem;" 
+                                                data-entry-id="{{ cell.id }}"
+                                                title="Remove assignment"></button>
                                         <strong>{{ cell.subject.code }}</strong><br>
-                                        <small>{{ cell.teacher.name|slice:":10" }}</small>
+                                        <small>{{ cell.teacher.name|slice:":12" }}</small>
+                                        {% if cell.room %}
+                                            <br><small class="text-muted">Room: {{ cell.room.name|slice:":8" }}</small>
+                                        {% endif %}
                                     </div>
                                 {% else %}
                                     &nbsp;
@@ -110,20 +255,19 @@
     {% endfor %}
 </div>
 
-<a href="{% url 'timetable_index' %}" class="btn btn-secondary no-print">Back</a>
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary no-print mt-3">Back</a>
 
-<!-- Enhanced Conflict Modal -->
+<!-- Conflict Resolution Modal -->
 <div class="modal fade" id="conflictModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Conflict Detected</h5>
+                <h5 class="modal-title">Scheduling Conflict Detected</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <p><strong>Conflicts:</strong></p>
                 <ul id="conflict-list"></ul>
-
                 <hr>
                 <p><strong>Suggested Resolutions:</strong></p>
                 <div id="suggestions-container">
@@ -139,7 +283,6 @@
                         No automatic suggestions available. Use the actions below.
                     </div>
                 </div>
-
                 <hr>
                 <p><strong>Actions:</strong></p>
             </div>
@@ -152,9 +295,73 @@
     </div>
 </div>
 
-<!-- JavaScript with all features -->
+<!-- Subject Selection / Creation Modal -->
+<div class="modal fade" id="subjectSelectModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="subject-modal-title">Select Subject</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-2" id="subject-modal-message">Choose a subject:</p>
+                <div id="subject-select-list" class="list-group mb-3"></div>
+                
+                <div id="new-subject-section">
+                    <hr>
+                    <label class="form-label small fw-bold">Or create a new subject:</label>
+                    <div class="input-group">
+                        <input type="text" id="new-subject-input" class="form-control form-control-sm" placeholder="e.g. Art & Craft">
+                        <button type="button" id="btn-create-subject" class="btn btn-sm btn-success">Create & Assign</button>
+                    </div>
+                    <div class="invalid-feedback d-block" id="new-subject-error" style="display:none;">
+                        Please enter a subject name.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide-Up Floating Error Notification Toast -->
+<div id="floating-error-toast" class="p-3">
+    <div class="d-flex align-items-start">
+        <div class="toast-icon-wrapper me-3">
+            <i class="bi bi-shield-lock-fill fs-4"></i>
+        </div>
+        <div class="flex-grow-1 pe-2">
+            <h6 class="mb-1 fw-bold text-dark fs-6" id="toast-title">Assignment Restricted</h6>
+            <p class="mb-0 text-secondary small lh-sm" id="toast-message">
+                Teacher cannot be assigned to this slot.
+            </p>
+        </div>
+        <button type="button" class="btn-close ms-2 mt-1" id="close-floating-toast" aria-label="Close"></button>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        let toastTimeout = null;
+
+        window.showDragError = function(title, message) {
+            const toast = document.getElementById('floating-error-toast');
+            const toastTitle = document.getElementById('toast-title');
+            const toastMessage = document.getElementById('toast-message');
+            if (toast && toastTitle && toastMessage) {
+                toastTitle.textContent = title;
+                toastMessage.textContent = message;
+                if (toastTimeout) clearTimeout(toastTimeout);
+                toast.classList.add('show-toast');
+                toastTimeout = setTimeout(() => { toast.classList.remove('show-toast'); }, 7000);
+            } else {
+                alert(`${title}: ${message}`);
+            }
+        };
+
+        document.getElementById('close-floating-toast')?.addEventListener('click', function() {
+            document.getElementById('floating-error-toast')?.classList.remove('show-toast');
+        });
+
         const toggleBtn = document.getElementById('edit-toggle');
         const modeIndicator = document.getElementById('mode-indicator');
         const conflictModal = new bootstrap.Modal(document.getElementById('conflictModal'));
@@ -166,19 +373,20 @@
         const freeTeachersSection = document.getElementById('free-teachers-section');
         const freePeriodsSection = document.getElementById('free-periods-section');
         const noSuggestions = document.getElementById('no-suggestions');
+        const subjectSelectModal = new bootstrap.Modal(document.getElementById('subjectSelectModal'));
 
         let editMode = false;
         let dragData = null;
         let currentPendingData = null;
+        let dragSourceType = null;
 
-        // ---- Edit mode persistence ----
         function applyEditMode(enable) {
             editMode = enable;
             toggleBtn.textContent = editMode ? 'Exit Edit Mode' : 'Edit Mode';
-            modeIndicator.textContent = editMode ? 'Edit' : 'Read‑only';
-            modeIndicator.className = 'badge ' + (editMode ? 'bg-warning' : 'bg-secondary');
+            modeIndicator.textContent = editMode ? 'Edit Mode On' : 'Read‑only';
+            modeIndicator.className = 'badge ' + (editMode ? 'bg-warning text-dark' : 'bg-secondary');
             document.querySelectorAll('.timetable-cell').forEach(cell => {
-                cell.draggable = editMode && cell.dataset.entryId;
+                cell.draggable = editMode && !!cell.dataset.entryId;
             });
             document.querySelectorAll('.timetable-cell .entry').forEach(entry => {
                 entry.style.cursor = editMode ? 'grab' : 'default';
@@ -186,191 +394,363 @@
             localStorage.setItem('editMode', editMode ? 'true' : 'false');
         }
 
-        const saved = localStorage.getItem('editMode');
-        applyEditMode(saved === 'true');
+        let savedMode = localStorage.getItem('editMode');
+        applyEditMode(savedMode === 'true');
 
         toggleBtn.addEventListener('click', function() {
             applyEditMode(!editMode);
         });
 
-        // ---- Drag & Drop ----
         document.addEventListener('dragstart', function(e) {
             const cell = e.target.closest('.timetable-cell');
-            if (!cell || !editMode) {
-                e.preventDefault();
-                return;
-            }
-            const entryId = cell.dataset.entryId;
-            if (!entryId) {
-                e.preventDefault();
-                return;
-            }
-            dragData = {
-                entryId: entryId,
-                classId: cell.dataset.classId,
-                sectionId: cell.dataset.sectionId,
-                day: cell.dataset.day,
-                period: cell.dataset.period,
-                sourceCell: cell,
-            };
-            e.dataTransfer.setData('text/plain', entryId);
-            e.dataTransfer.effectAllowed = 'move';
-        });
-
-        document.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            const cell = e.target.closest('.timetable-cell');
-            if (cell && editMode) {
-                document.querySelectorAll('.timetable-cell').forEach(c => c.classList.remove('dragover-highlight'));
-                cell.classList.add('dragover-highlight');
-            }
-        });
-
-        document.addEventListener('dragleave', function(e) {
-            const cell = e.target.closest('.timetable-cell');
             if (cell) {
-                cell.classList.remove('dragover-highlight');
+                if (!editMode) { e.preventDefault(); return; }
+                const entryId = cell.dataset.entryId;
+                if (!entryId) { e.preventDefault(); return; }
+                dragSourceType = 'entry';
+                dragData = {
+                    entryId: entryId,
+                    classId: cell.dataset.classId,
+                    sectionId: cell.dataset.sectionId,
+                    day: cell.dataset.day,
+                    period: cell.dataset.period,
+                    sourceCell: cell,
+                };
+                e.dataTransfer.setData('text/plain', 'entry:' + entryId);
+                e.dataTransfer.effectAllowed = 'move';
             }
         });
 
-        document.addEventListener('drop', function(e) {
-            e.preventDefault();
-            document.querySelectorAll('.timetable-cell').forEach(c => c.classList.remove('dragover-highlight'));
-
-            if (!editMode || !dragData) {
-                alert('Edit mode is off. Enable edit mode to move entries.');
-                return;
+        document.addEventListener('dragstart', function(e) {
+            const teacherItem = e.target.closest('.teacher-item');
+            if (teacherItem) {
+                if (!editMode) {
+                    e.preventDefault();
+                    showDragError('Edit Mode Required', 'Please enable Edit Mode to assign teachers.');
+                    return;
+                }
+                dragSourceType = 'teacher';
+                dragData = {
+                    teacherId: teacherItem.dataset.teacherId,
+                    teacherName: teacherItem.dataset.teacherName,
+                    subjects: teacherItem.dataset.subjects ? teacherItem.dataset.subjects.split(',') : [],
+                };
+                e.dataTransfer.setData('text/plain', 'teacher:' + teacherItem.dataset.teacherId);
+                e.dataTransfer.effectAllowed = 'copyMove';
             }
+        });
 
-            const targetCell = e.target.closest('.timetable-cell');
-            if (!targetCell) return;
-
-            const targetEntryId = targetCell.dataset.entryId;
-            const sourceId = dragData.entryId;
-
-            if (sourceId === targetEntryId) {
-                dragData = null;
-                return;
+        document.addEventListener('click', function(e) {
+            const removeBtn = e.target.closest('.remove-entry-btn');
+            if (removeBtn) {
+                e.stopPropagation();
+                if (!editMode) {
+                    showDragError('Edit Mode Required', 'Enable Edit Mode to remove assignments.');
+                    return;
+                }
+                const entryId = removeBtn.dataset.entryId;
+                if (confirm('Are you sure you want to remove this assignment?')) {
+                    deleteTimetableEntry(entryId);
+                }
             }
+        });
 
+        const trashZone = document.getElementById('trash-zone');
+        if (trashZone) {
+            trashZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (dragSourceType === 'entry') {
+                    this.classList.add('bg-danger', 'text-white');
+                    this.classList.remove('bg-danger-subtle', 'text-danger');
+                }
+            });
+            trashZone.addEventListener('dragleave', function() {
+                this.classList.remove('bg-danger', 'text-white');
+                this.classList.add('bg-danger-subtle', 'text-danger');
+            });
+            trashZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('bg-danger', 'text-white');
+                this.classList.add('bg-danger-subtle', 'text-danger');
+                if (dragSourceType === 'entry' && dragData && dragData.entryId) {
+                    deleteTimetableEntry(dragData.entryId);
+                } else if (dragSourceType === 'teacher') {
+                    showDragError('Invalid Drop', 'Sidebar items cannot be deleted. Only grid assignments can be cleared.');
+                }
+            });
+        }
+
+        function deleteTimetableEntry(entryId) {
             const formData = new FormData();
-            formData.append('source_id', sourceId);
-            formData.append('override', 'false');
-            formData.append('move', targetEntryId ? 'false' : 'true');
-
-            if (targetEntryId) {
-                formData.append('target_id', targetEntryId);
-            } else {
-                formData.append('target_class', targetCell.dataset.classId);
-                formData.append('target_section', targetCell.dataset.sectionId);
-                formData.append('target_day', targetCell.dataset.day);
-                formData.append('target_period', targetCell.dataset.period);
-            }
-
-            // Store for later use in suggestions
-            currentPendingData = {
-                formData: formData,
-                sourceId: sourceId,
-                targetEntryId: targetEntryId,
-                targetCell: targetCell,
-                sourceClassId: dragData.classId,
-                sourceSectionId: dragData.sectionId,
-            };
-
-            fetch('/timetable/swap/', {
+            formData.append('entry_id', entryId);
+            fetch('/timetable/delete-entry/', {
                 method: 'POST',
                 body: formData,
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' },
             })
-            .then(response => {
-                if (response.status === 409) {
-                    return response.json().then(data => {
-                        // Show conflicts
-                        conflictList.innerHTML = data.conflicts.map(c => `<li>${c}</li>`).join('');
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) location.reload();
+                else showDragError('Deletion Error', data.error || 'Could not delete the assignment.');
+            })
+            .catch(err => showDragError('Network Error', 'Failed to connect: ' + err));
+        }
 
-                        // Show suggestions
-                        freeTeachersList.innerHTML = '';
-                        freePeriodsList.innerHTML = '';
-                        freeTeachersSection.style.display = 'none';
-                        freePeriodsSection.style.display = 'none';
-                        noSuggestions.style.display = 'none';
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = (dragSourceType === 'teacher') ? 'copy' : 'move';
+        });
 
-                        if (data.suggestions) {
-                            let hasSuggestions = false;
-
-                            // Free teachers
-                            if (data.suggestions.free_teachers && data.suggestions.free_teachers.length > 0) {
-                                hasSuggestions = true;
-                                freeTeachersSection.style.display = 'block';
-                                data.suggestions.free_teachers.forEach(t => {
-                                    const li = document.createElement('li');
-                                    li.className = 'list-group-item list-group-item-action';
-                                    li.textContent = t.name;
-                                    li.dataset.teacherId = t.id;
-                                    li.addEventListener('click', function() {
-                                        // Assign this free teacher to the target period
-                                        const fd = currentPendingData.formData;
-                                        fd.set('assign_free_teacher', this.dataset.teacherId);
-                                        fd.set('override', 'true');
-                                        fd.delete('swap_teachers');
-                                        sendResolve(fd);
-                                    });
-                                    freeTeachersList.appendChild(li);
-                                });
-                            }
-
-                            // Free periods
-                            if (data.suggestions.free_periods && data.suggestions.free_periods.length > 0) {
-                                hasSuggestions = true;
-                                freePeriodsSection.style.display = 'block';
-                                const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-                                data.suggestions.free_periods.forEach(slot => {
-                                    const li = document.createElement('li');
-                                    li.className = 'list-group-item list-group-item-action';
-                                    li.textContent = `${dayNames[slot.day]} P${slot.period}`;
-                                    li.addEventListener('click', function() {
-                                        const fd = currentPendingData.formData;
-                                        fd.set('move', 'true');
-                                        fd.set('target_day', slot.day);
-                                        fd.set('target_period', slot.period);
-                                        fd.set('target_class', currentPendingData.sourceClassId);
-                                        fd.set('target_section', currentPendingData.sourceSectionId);
-                                        fd.set('override', 'true');
-                                        fd.delete('swap_teachers');
-                                        sendResolve(fd);
-                                    });
-                                    freePeriodsList.appendChild(li);
-                                });
-                            }
-
-                            if (!hasSuggestions) {
-                                noSuggestions.style.display = 'block';
-                            }
-                        }
-
-                        // Show/hide swap teachers button based on conflict type
-                        const hasTeacherConflict = data.conflicts.some(c => c.toLowerCase().includes('teacher'));
-                        swapTeachersBtn.style.display = hasTeacherConflict ? 'inline-block' : 'none';
-
-                        conflictModal.show();
-                    });
-                } else if (response.ok) {
-                    return response.json().then(data => {
-                        if (data.success) location.reload();
-                        else alert('Error: ' + JSON.stringify(data));
-                    });
+        // ----- Subject Picker Helpers -----
+        function submitTeacherAssignment(formData) {
+            fetch('/timetable/assign-teacher/', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log('[DEBUG] assign-teacher response:', data);
+                if (data.success) {
+                    location.reload();
+                } else if (data.requires_selection && data.subjects) {
+                    showSubjectPicker(data.subjects, formData, data.mode || 'select_existing', data.allow_new);
                 } else {
-                    throw new Error('Server error: ' + response.status);
+                    showDragError('Assignment Error', data.error || 'Could not assign teacher.');
+                    resetDragState();
                 }
             })
             .catch(err => {
-                alert('Network error: ' + err);
-                dragData = null;
+                console.error('[DEBUG] assign-teacher error:', err);
+                showDragError('Network Error', 'Failed to connect: ' + err);
+                resetDragState();
+            });
+        }
+
+        function showSubjectPicker(subjects, baseFormData, mode, allowNew) {
+            const subjectSelectList = document.getElementById('subject-select-list');
+            const modalTitle = document.getElementById('subject-modal-title');
+            const modalMessage = document.getElementById('subject-modal-message');
+            const newSubjectSection = document.getElementById('new-subject-section');
+            const newInput = document.getElementById('new-subject-input');
+            const createBtn = document.getElementById('btn-create-subject');
+            const errorDiv = document.getElementById('new-subject-error');
+
+            subjectSelectList.innerHTML = '';
+            newInput.value = '';
+            newInput.classList.remove('is-invalid');
+            errorDiv.style.display = 'none';
+
+            if (mode === 'assign_new') {
+                modalTitle.textContent = 'Assign Subject';
+                modalMessage.textContent = 'This teacher has no subjects for this class. Select existing or create new:';
+            } else {
+                modalTitle.textContent = 'Select Subject';
+                modalMessage.textContent = 'This teacher teaches multiple subjects for this class. Choose one:';
+            }
+            
+            // CRITICAL FIX: force the input section visible when mode is assign_new
+            newSubjectSection.style.display = (allowNew || mode === 'assign_new') ? 'block' : 'none';
+
+            if (subjects.length === 0 && mode === 'assign_new') {
+                const emptyMsg = document.createElement('div');
+                emptyMsg.className = 'text-muted small mb-2';
+                emptyMsg.textContent = 'No existing subjects found for this class.';
+                subjectSelectList.appendChild(emptyMsg);
+            }
+
+            subjects.forEach(sub => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'list-group-item list-group-item-action';
+                btn.innerHTML = `<strong>${sub.name}</strong> <span class="badge bg-secondary ms-1">${sub.code}</span>`;
+                btn.addEventListener('click', function() {
+                    subjectSelectModal.hide();
+                    baseFormData.append('subject_id', sub.id);
+                    submitTeacherAssignment(baseFormData);
+                });
+                subjectSelectList.appendChild(btn);
+            });
+
+            // Fresh clone to avoid duplicate listeners
+            const freshCreateBtn = createBtn.cloneNode(true);
+            createBtn.parentNode.replaceChild(freshCreateBtn, createBtn);
+            const freshInput = newInput.cloneNode(true);
+            newInput.parentNode.replaceChild(freshInput, newInput);
+
+            freshCreateBtn.addEventListener('click', function() {
+                const val = freshInput.value.trim();
+                if (!val) {
+                    freshInput.classList.add('is-invalid');
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                freshInput.classList.remove('is-invalid');
+                errorDiv.style.display = 'none';
+                subjectSelectModal.hide();
+                baseFormData.append('new_subject_name', val);
+                submitTeacherAssignment(baseFormData);
+            });
+
+            freshInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    freshCreateBtn.click();
+                }
+            });
+
+            subjectSelectModal.show();
+        }
+
+        // ----- Cell Drop Listener -----
+        document.querySelectorAll('.timetable-cell').forEach(cell => {
+            cell.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                if (editMode) this.classList.add('dragover-highlight');
+            });
+            cell.addEventListener('dragleave', function() {
+                this.classList.remove('dragover-highlight');
+            });
+            cell.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.classList.remove('dragover-highlight');
+                if (!editMode || !dragData) return;
+
+                // --- Teacher Drop ---
+                // --- Scenario A: Teacher Dropped onto Cell ---
+                if (dragSourceType === 'teacher') {
+                    const targetCell = this;
+                    if (targetCell.dataset.entryId) {
+                        showDragError('Slot Occupied', 'This slot is already filled. Choose an empty period or remove the existing subject first.');
+                        resetDragState();
+                        return;
+                    }
+                    const isCombinedChecked = document.getElementById('combined-class-toggle')?.checked || false;
+                    const formData = new FormData();
+                    formData.append('teacher_id', dragData.teacherId);
+                    formData.append('class_id', targetCell.dataset.classId);
+                    formData.append('section_id', targetCell.dataset.sectionId);
+                    formData.append('day', targetCell.dataset.day);
+                    formData.append('period', targetCell.dataset.period);
+                    formData.append('is_combined', isCombinedChecked ? 'true' : 'false');
+                    submitTeacherAssignment(formData);
+                    return;
+                }
+
+                // --- Entry Swap/Move ---
+                if (dragSourceType === 'entry') {
+                    const targetCell = this;
+                    const targetEntryId = targetCell.dataset.entryId;
+                    const sourceId = dragData.entryId;
+                    if (sourceId === targetEntryId) { resetDragState(); return; }
+
+                    const formData = new FormData();
+                    formData.append('source_id', sourceId);
+                    formData.append('override', 'false');
+                    formData.append('move', targetEntryId ? 'false' : 'true');
+                    if (targetEntryId) {
+                        formData.append('target_id', targetEntryId);
+                    } else {
+                        formData.append('target_class', targetCell.dataset.classId);
+                        formData.append('target_section', targetCell.dataset.sectionId);
+                        formData.append('target_day', targetCell.dataset.day);
+                        formData.append('target_period', targetCell.dataset.period);
+                    }
+
+                    currentPendingData = {
+                        formData: formData,
+                        sourceId: sourceId,
+                        targetEntryId: targetEntryId,
+                        targetCell: targetCell,
+                        sourceClassId: dragData.classId,
+                        sourceSectionId: dragData.sectionId,
+                    };
+
+                    fetch('/timetable/swap/', {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                    })
+                    .then(response => {
+                        if (response.status === 409) {
+                            return response.json().then(data => {
+                                conflictList.innerHTML = data.conflicts.map(c => `<li>${c}</li>`).join('');
+                                freeTeachersList.innerHTML = '';
+                                freePeriodsList.innerHTML = '';
+                                freeTeachersSection.style.display = 'none';
+                                freePeriodsSection.style.display = 'none';
+                                noSuggestions.style.display = 'none';
+
+                                if (data.suggestions) {
+                                    let hasSuggestions = false;
+                                    if (data.suggestions.free_teachers && data.suggestions.free_teachers.length > 0) {
+                                        hasSuggestions = true;
+                                        freeTeachersSection.style.display = 'block';
+                                        data.suggestions.free_teachers.forEach(t => {
+                                            const li = document.createElement('li');
+                                            li.className = 'list-group-item list-group-item-action';
+                                            li.textContent = t.name;
+                                            li.dataset.teacherId = t.id;
+                                            li.addEventListener('click', function() {
+                                                const fd = currentPendingData.formData;
+                                                fd.set('assign_free_teacher', this.dataset.teacherId);
+                                                fd.set('override', 'true');
+                                                fd.delete('swap_teachers');
+                                                sendResolve(fd);
+                                            });
+                                            freeTeachersList.appendChild(li);
+                                        });
+                                    }
+                                    if (data.suggestions.free_periods && data.suggestions.free_periods.length > 0) {
+                                        hasSuggestions = true;
+                                        freePeriodsSection.style.display = 'block';
+                                        const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+                                        data.suggestions.free_periods.forEach(slot => {
+                                            const li = document.createElement('li');
+                                            li.className = 'list-group-item list-group-item-action';
+                                            li.textContent = `${dayNames[slot.day]} P${slot.period}`;
+                                            li.addEventListener('click', function() {
+                                                const fd = currentPendingData.formData;
+                                                fd.set('move', 'true');
+                                                fd.set('target_day', slot.day);
+                                                fd.set('target_period', slot.period);
+                                                fd.set('target_class', currentPendingData.sourceClassId);
+                                                fd.set('target_section', currentPendingData.sourceSectionId);
+                                                fd.set('override', 'true');
+                                                fd.delete('swap_teachers');
+                                                sendResolve(fd);
+                                            });
+                                            freePeriodsList.appendChild(li);
+                                        });
+                                    }
+                                    if (!hasSuggestions) noSuggestions.style.display = 'block';
+                                }
+
+                                const hasTeacherConflict = data.conflicts.some(c => c.toLowerCase().includes('teacher'));
+                                swapTeachersBtn.style.display = hasTeacherConflict ? 'inline-block' : 'none';
+                                conflictModal.show();
+                            });
+                        } else if (response.ok) {
+                            return response.json().then(data => {
+                                if (data.success) location.reload();
+                                else showDragError('Swap Error', JSON.stringify(data));
+                            });
+                        } else {
+                            throw new Error('Server error: ' + response.status);
+                        }
+                    })
+                    .catch(err => showDragError('Network Error', 'Failed to connect: ' + err))
+                    .finally(() => resetDragState());
+                }
             });
         });
 
-        // ---- Helper to send resolve request ----
+        function resetDragState() {
+            dragData = null;
+            dragSourceType = null;
+        }
+
         function sendResolve(formData) {
             conflictModal.hide();
             fetch('/timetable/swap/', {
@@ -381,13 +761,12 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) location.reload();
-                else alert('Error: ' + JSON.stringify(data));
+                else showDragError('Resolution Error', JSON.stringify(data));
             })
-            .catch(err => alert('Network error: ' + err));
+            .catch(err => showDragError('Network Error', 'Failed to connect: ' + err));
             currentPendingData = null;
         }
 
-        // ---- Override button ----
         confirmOverrideBtn.addEventListener('click', function() {
             conflictModal.hide();
             if (currentPendingData) {
@@ -398,7 +777,6 @@
             }
         });
 
-        // ---- Swap Teachers button ----
         swapTeachersBtn.addEventListener('click', function() {
             conflictModal.hide();
             if (currentPendingData) {

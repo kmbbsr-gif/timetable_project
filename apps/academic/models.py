@@ -32,18 +32,20 @@ class Class(models.Model):
         return self.name
 
 class Section(models.Model):
-    class_instance = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='sections')
-    name = models.CharField(max_length=5)  # A, B, C...
+    class_instance = models.ForeignKey('Class', on_delete=models.CASCADE, related_name="sections")
+    name = models.CharField(max_length=10)  # e.g., A, B, C
+    wing = models.CharField(max_length=20, choices=WING_CHOICES, blank=True)
     student_strength = models.PositiveIntegerField(default=0)
-    working_days = models.JSONField(default=list)  # list of ints 0-6
-    wing = models.CharField(max_length=10, choices=WING_CHOICES)
+    working_days = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
-
+    
     class Meta:
-        unique_together = ['class_instance', 'name']
-
+        unique_together = ("class_instance", "name")
+        ordering = ['class_instance__display_order', 'name']
+        
+    
     def __str__(self):
-        return f"{self.class_instance} - {self.name}"
+        return f"{self.class_instance.name} - {self.name}"
 
 class Room(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
@@ -70,6 +72,9 @@ class ClassSubject(models.Model):
     def __str__(self):
         return f"{self.class_instance} - {self.subject}"
 
+from datetime import datetime, date
+from django.db import models
+
 class PeriodDefinition(models.Model):
     DAY_CHOICES = [
         (0, 'Monday'),
@@ -80,17 +85,53 @@ class PeriodDefinition(models.Model):
         (5, 'Saturday'),
         (6, 'Sunday'),
     ]
+
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='period_definitions')
     wing = models.CharField(max_length=10, choices=WING_CHOICES)
     period_number = models.PositiveSmallIntegerField()
-    day_of_week = models.PositiveSmallIntegerField(choices=DAY_CHOICES, null=True, blank=True,
-                                                   help_text="Leave blank for all days, or select a specific day for exceptions.")
+    days = models.JSONField(default=list, blank=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    duration_minutes = models.PositiveSmallIntegerField()
+    duration_minutes = models.PositiveIntegerField(default=0, blank=True, null=True)
     is_assembly = models.BooleanField(default=False)
     is_lunch = models.BooleanField(default=False)
     is_break = models.BooleanField(default=False)
     break_duration = models.PositiveSmallIntegerField(default=0)
-    special_activity = models.CharField(max_length=100, blank=True, null=True,
-                                        help_text="e.g., MPT, Yoga, Games, Library")
+    special_activity = models.CharField(max_length=100, blank=True, null=True, help_text="e.g., MPT, Yoga, Games, Library")
+
+    class Meta:
+        unique_together = ['school', 'wing', 'period_number']
+        ordering = ['wing', 'period_number']
+
+    def calculate_duration(self):
+        """Calculates difference between start_time and end_time in minutes."""
+        if self.start_time and self.end_time:
+            dt_start = datetime.combine(date.today(), self.start_time)
+            dt_end = datetime.combine(date.today(), self.end_time)
+            if dt_end > dt_start:
+                return int((dt_end - dt_start).total_seconds() / 60)
+        return 0
+
+    def save(self, *args, **kwargs):
+        # Auto-compute duration_minutes before saving to database
+        if not self.duration_minutes or self.duration_minutes == 0:
+            self.duration_minutes = self.calculate_duration()
+        super().save(*args, **kwargs)
+
+    def get_days_display(self):
+        if not self.days:
+            return "All days"
+        day_names = dict(self.DAY_CHOICES)
+        
+        # Handle string or int stored days safely
+        if isinstance(self.days, (int, str)):
+            days_list = [int(self.days)]
+        elif isinstance(self.days, (list, tuple, set)):
+            days_list = [int(d) for d in self.days if d is not None and str(d).isdigit()]
+        else:
+            days_list = []
+            
+        return ", ".join(day_names[d] for d in days_list if d in day_names)
+
+    def __str__(self):
+        return f"{self.wing} - P{self.period_number} ({self.start_time.strftime('%H:%M')} - {self.end_time.strftime('%H:%M')})"

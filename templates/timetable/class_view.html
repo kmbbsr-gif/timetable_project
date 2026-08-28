@@ -5,6 +5,7 @@
 {% block content %}
 <h2>{{ class.name }} - {{ section.name }}</h2>
 
+<!-- Date picker -->
 <div class="row mb-3">
     <div class="col-md-4">
         <form method="get" action="{% url 'view_class_timetable' class.id section.id %}" class="d-flex">
@@ -21,6 +22,7 @@
     </div>
 </div>
 
+<!-- Export buttons -->
 <div class="btn-group mb-3 no-print" role="group">
     <a href="{% url 'export_class_pdf' class.id section.id %}" class="btn btn-danger">PDF</a>
     <a href="{% url 'export_class_excel' class.id section.id %}" class="btn btn-success">Excel</a>
@@ -46,11 +48,22 @@
                         <br><small>{{ row.period.start_time|time:"H:i" }} – {{ row.period.end_time|time:"H:i" }}</small>
                     {% endif %}
                 </td>
+                <!-- Colour-coded cell with Combined Class highlight -->
                 {% for cell in row.cells %}
-                    <td>
+                    <td style="{% if cell %}{% if cell.is_combined %}background-color: #fff3cd; border-left: 4px solid #ffc107;{% else %}background-color: {{ cell.subject.color }}20; border-left: 4px solid {{ cell.subject.color }};{% endif %}{% endif %}">
                         {% if cell %}
-                            <strong>{{ cell.subject.name }}</strong><br>
+                            <strong style="color: {% if cell.is_combined %}#856404{% else %}{{ cell.subject.color }}{% endif %};">
+                                {{ cell.subject.name }}
+                            </strong><br>
                             <small>{{ cell.teacher.name }}</small>
+                            {% if cell.room %}
+                                <br><small>Room: {{ cell.room.name }}</small>
+                            {% endif %}
+                            
+                            <!-- Combined Badge -->
+                            {% if cell.is_combined %}
+                                <br><span class="badge bg-warning text-dark mt-1" style="font-size: 0.75rem;">Combined</span>
+                            {% endif %}
                         {% endif %}
                     </td>
                 {% endfor %}

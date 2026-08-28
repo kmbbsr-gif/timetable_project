@@ -1,13 +1,379 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ view.title|default:"Room Form" }}{% endblock %}
+{% block title %}{{ view.title|default:"Room Form" }} - Keshab Sir's School Studio{% endblock %}
 
 {% block content %}
-<h2>{{ view.title|default:"Room" }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a href="{% url 'room_list' %}" class="btn btn-secondary">Cancel</a>
-</form>
+<style>
+    .form-section {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+        background: white;
+    }
+    .form-section:hover {
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .section-header {
+        padding: 20px 28px;
+        font-weight: 600;
+        font-size: 1rem;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+    }
+    .section-body {
+        padding: 32px;
+        background: #fff;
+    }
+    .form-floating-custom {
+        position: relative;
+        margin-bottom: 24px;
+    }
+    .form-floating-custom label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #6c757d;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .form-floating-custom input,
+    .form-floating-custom select,
+    .form-floating-custom textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.25s ease;
+        background: #f8f9fa;
+    }
+    .form-floating-custom input:focus,
+    .form-floating-custom select:focus,
+    .form-floating-custom textarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    /* ─── Instant Reactive Toggle Switch ─── */
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 18px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+        user-select: none;
+    }
+    .checkbox-wrapper:hover {
+        border-color: #c7d2fe;
+        background: #ffffff;
+    }
+    .checkbox-wrapper:has(input[type="checkbox"]:checked) {
+        background: #eef2ff;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
+    
+    /* Native Checkbox Replacement */
+    .checkbox-wrapper input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 2.8rem;
+        height: 1.55rem;
+        background-color: #cbd5e1;
+        border: 2px solid transparent;
+        border-radius: 2rem;
+        position: relative;
+        cursor: pointer;
+        outline: none !important;
+        box-shadow: none !important;
+        margin: 0;
+        flex-shrink: 0;
+        transition: background-color 0.15s ease;
+    }
+    .checkbox-wrapper input[type="checkbox"]::before {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 50%;
+        background-color: #ffffff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .checkbox-wrapper input[type="checkbox"]:checked {
+        background-color: #4f46e5 !important;
+    }
+    .checkbox-wrapper input[type="checkbox"]:checked::before {
+        transform: translateX(1.25rem);
+    }
+
+    .checkbox-wrapper label {
+        margin-bottom: 0;
+        cursor: pointer;
+        text-transform: none;
+        font-size: 0.95rem;
+        color: #1e293b;
+        flex-grow: 1;
+    }
+    .checkbox-wrapper label strong {
+        display: block;
+        font-size: 0.95rem;
+        color: #0f172a;
+    }
+    .checkbox-wrapper label small {
+        color: #64748b;
+        font-size: 0.82rem;
+        display: block;
+        margin-top: 2px;
+    }
+
+    .error-text {
+        color: #dc3545;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .error-text::before {
+        content: "⚠";
+    }
+    .page-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(79, 70, 229, 0.3);
+    }
+    .page-header h1 {
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.6rem;
+    }
+    .page-header p {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border: none;
+        padding: 14px 36px;
+        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        transition: all 0.3s ease;
+        color: white;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        color: white;
+    }
+    .btn-cancel {
+        padding: 14px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: 2px solid #dee2e6;
+        color: #6c757d;
+        background: white;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .btn-cancel:hover {
+        border-color: #adb5bd;
+        color: #495057;
+        background: #f8f9fa;
+    }
+    .action-bar {
+        background: white;
+        padding: 24px 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 24px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+    .form-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .school-display-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-weight: 700;
+        color: #334155;
+    }
+    @media (max-width: 768px) {
+        .page-header { padding: 20px; }
+        .page-header h1 { font-size: 1.3rem; }
+        .section-body { padding: 20px; }
+        .action-bar { flex-direction: column; align-items: stretch; }
+        .btn-save, .btn-cancel { width: 100%; text-align: center; }
+        .form-row-2 { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>🚪 {{ view.title|default:"Room" }}</h1>
+        <p>Manage room details, type, capacity, and availability</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger rounded-3 mb-4">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-section">
+                    <div class="section-header">
+                        🏫 Room Information
+                    </div>
+                    <div class="section-body">
+                        <!-- School & Name -->
+                        <div class="form-row-2">
+                            <div class="form-floating-custom">
+                                <label for="{{ form.school.id_for_label }}">School / Institution</label>
+                                {% if user.is_superuser %}
+                                    {{ form.school }}
+                                    {% if form.school.help_text %}
+                                        <small class="text-muted">{{ form.school.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.school.errors %}
+                                        <div class="error-text">{{ form.school.errors|first }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="school-display-box">
+                                        <span class="text-primary fs-5">🏫</span>
+                                        <span>{{ request.school.name|default:"Your Linked School" }}</span>
+                                    </div>
+                                    {% if request.school %}
+                                        <input type="hidden" name="school" value="{{ request.school.id }}">
+                                    {% else %}
+                                        {{ form.school }}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                                {{ form.name }}
+                                {% if form.name.help_text %}
+                                    <small class="text-muted">{{ form.name.help_text }}</small>
+                                {% endif %}
+                                {% if form.name.errors %}
+                                    <div class="error-text">{{ form.name.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Type & Capacity -->
+                        <div class="form-row-2">
+                            <div class="form-floating-custom">
+                                {% if form.type %}
+                                    <label for="{{ form.type.id_for_label }}">{{ form.type.label }}</label>
+                                    {{ form.type }}
+                                    {% if form.type.help_text %}
+                                        <small class="text-muted">{{ form.type.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.type.errors %}
+                                        <div class="error-text">{{ form.type.errors|first }}</div>
+                                    {% endif %}
+                                {% elif form.room_type %}
+                                    <label for="{{ form.room_type.id_for_label }}">{{ form.room_type.label }}</label>
+                                    {{ form.room_type }}
+                                    {% if form.room_type.help_text %}
+                                        <small class="text-muted">{{ form.room_type.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.room_type.errors %}
+                                        <div class="error-text">{{ form.room_type.errors|first }}</div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.capacity.id_for_label }}">{{ form.capacity.label }}</label>
+                                {{ form.capacity }}
+                                {% if form.capacity.help_text %}
+                                    <small class="text-muted">{{ form.capacity.help_text }}</small>
+                                {% endif %}
+                                {% if form.capacity.errors %}
+                                    <div class="error-text">{{ form.capacity.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Is Active Switcher -->
+                        <div class="form-floating-custom mb-0">
+                            <label class="checkbox-wrapper" for="{{ form.is_active.id_for_label }}">
+                                {{ form.is_active }}
+                                <span>
+                                    <strong>{{ form.is_active.label|default:"Is Active" }}</strong>
+                                    {% if form.is_active.help_text %}
+                                        <small>{{ form.is_active.help_text }}</small>
+                                    {% else %}
+                                        <small>Mark this room as available for timetable slot and lab allocations</small>
+                                    {% endif %}
+                                </span>
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="error-text">{{ form.is_active.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Bar -->
+                <div class="action-bar">
+                    <button type="submit" class="btn btn-save">
+                        <span>💾</span> Save Room
+                    </button>
+                    <a href="{% url 'room_list' %}" class="btn btn-cancel">
+                        <span>←</span> Cancel
+                    </a>
+                    {% if object %}
+                        <small class="text-muted ms-auto">
+                            Room ID: #{{ object.id }}
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 {% endblock %}

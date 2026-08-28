@@ -1,38 +1,521 @@
 {% extends 'base.html' %}
 
-{% block title %}periods{% endblock %}
+{% block title %}Period Definitions - Keshab Sir's School Studio{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+    }
+
+    /* Floating ambient orbs for depth */
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+        animation-delay: 0s;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    /* ─── Glass Header ─── */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: -0.02em;
+    }
+
+    .glass-title i {
+        color: #00d4ff;
+        margin-right: 0.5rem;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+    }
+
+    /* ─── Wing Filter Bar ─── */
+    .wing-filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        padding: 1rem 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.8);
+        padding: 0.4rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .filter-tab:hover, .filter-tab.active {
+        background: rgba(0, 212, 255, 0.2);
+        border-color: #00d4ff;
+        color: #ffffff;
+        box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+    }
+
+    /* ─── Glass Buttons ─── */
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff !important;
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        border-color: rgba(0, 212, 255, 0.6);
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.35);
+    }
+
+    .btn-glass-danger {
+        background: rgba(255, 107, 107, 0.15);
+        border: 1px solid rgba(255, 107, 107, 0.35);
+        color: #ff6b6b !important;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
+    }
+
+    .btn-glass-danger:hover {
+        background: rgba(255, 107, 107, 0.3);
+        border-color: rgba(255, 107, 107, 0.6);
+        color: #ffffff !important;
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.35);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #ffffff !important;
+    }
+
+    .btn-glass-sm {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        border-radius: 8px;
+    }
+
+    /* ─── Glass Table ─── */
+    .glass-table-container {
+        padding: 0.5rem;
+        overflow-x: auto;
+    }
+
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .glass-table thead th {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 1rem 1.25rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        white-space: nowrap;
+    }
+
+    .glass-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .glass-table thead th:last-child {
+        border-top-right-radius: 12px;
+    }
+
+    .glass-table tbody tr {
+        transition: all 0.25s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.06);
+        transform: scale(1.002);
+    }
+
+    .glass-table tbody td {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    .glass-table tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 12px;
+    }
+
+    .glass-table tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 12px;
+    }
+
+    .glass-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* ─── Wing Pills ─── */
+    .wing-pill {
+        display: inline-block;
+        padding: 0.25rem 0.65rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    .wing-junior { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .wing-middle { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.4); }
+    .wing-senior { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; border: 1px solid rgba(236, 72, 153, 0.4); }
+
+    /* ─── Type Badges ─── */
+    .badge-glass {
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid;
+    }
+
+    .badge-assembly {
+        background: rgba(0, 212, 255, 0.12);
+        border-color: rgba(0, 212, 255, 0.35);
+        color: #00d4ff;
+    }
+
+    .badge-lunch {
+        background: rgba(255, 193, 7, 0.12);
+        border-color: rgba(255, 193, 7, 0.35);
+        color: #ffc107;
+    }
+
+    .badge-break {
+        background: rgba(156, 136, 255, 0.12);
+        border-color: rgba(156, 136, 255, 0.35);
+        color: #9c88ff;
+    }
+
+    .badge-normal {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .scope-badge {
+        font-size: 0.85rem;
+        background: rgba(124, 58, 237, 0.25);
+        border: 1px solid rgba(124, 58, 237, 0.5);
+        color: #c4b5fd;
+        padding: 0.35rem 0.8rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    /* ─── Empty State ─── */
+    .glass-empty {
+        text-align: center;
+        padding: 3rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-style: italic;
+    }
+
+    /* ─── Action Buttons Group ─── */
+    .action-group {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+        .glass-page-wrapper {
+            padding: 1rem;
+        }
+        .glass-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .glass-table thead {
+            display: none;
+        }
+        .glass-table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-table tbody td::before {
+            content: attr(data-label);
+            font-weight: 600;
+            color: #00d4ff;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .glass-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .glass-table tbody tr:hover {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">periods</h1>
-    <a href="{% url 'period_create' %}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Add period</a>
+<div class="glass-page-wrapper">
+    <div class="glass-card">
+        <!-- Header -->
+        <div class="glass-header">
+            <div>
+                <h1 class="glass-title">
+                    <i class="bi bi-clock-history"></i> Period Definitions
+                </h1>
+                {% if user.is_superuser and request.school %}
+                    <div class="mt-2">
+                        <span class="scope-badge">
+                            <i class="bi bi-shield-check"></i> Master Filter Active: <strong>{{ request.school.name }}</strong>
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <a href="{% url 'period_create' %}" class="btn-glass">
+                    <i class="bi bi-plus-circle"></i> Add Period
+                </a>
+                <a href="{% url 'bulk_period_create' %}" class="btn-glass btn-glass-secondary">
+                    <i class="bi bi-layers"></i> Bulk Add Periods
+                </a>
+                <a href="{% url 'manage_fixed_entries' %}" class="btn-glass btn-glass-secondary">
+                    <i class="bi bi-exclamation-diamond"></i> Add Class Exception
+                </a>
+            </div>
+        </div>
+
+        <!-- Wing Filter Tabs -->
+        <div class="wing-filter-bar">
+            <button type="button" class="filter-tab active" onclick="filterWing('all', this)">All Wings</button>
+            <button type="button" class="filter-tab" onclick="filterWing('Junior', this)">Junior Wing</button>
+            <button type="button" class="filter-tab" onclick="filterWing('Middle', this)">Middle Wing</button>
+            <button type="button" class="filter-tab" onclick="filterWing('Senior', this)">Senior Wing</button>
+        </div>
+
+        <!-- Table -->
+        <div class="glass-table-container">
+            <table class="glass-table">
+                <thead>
+                    <tr>
+                        {% if user.is_superuser and not request.school %}
+                            <th>School</th>
+                        {% endif %}
+                        <th>Wing</th>
+                        <th>Period #</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Duration</th>
+                        <th>Type</th>
+                        <th>Special Activity</th>
+                        <th>Day</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for period in periods %}
+                    <tr class="period-row" data-wing="{{ period.wing }}">
+                        {% if user.is_superuser and not request.school %}
+                            <td data-label="School">
+                                <span style="color: #67e8f9; font-weight: 500;">
+                                    <i class="bi bi-building me-1"></i> {{ period.school.name|default:"Unassigned" }}
+                                </span>
+                            </td>
+                        {% endif %}
+                        <td data-label="Wing">
+                            <span class="wing-pill {% if period.wing == 'Junior' %}wing-junior{% elif period.wing == 'Middle' %}wing-middle{% else %}wing-senior{% endif %}">
+                                {{ period.wing }}
+                            </span>
+                        </td>
+                        <td data-label="Period #">
+                            <span style="font-weight: 600; color: #00d4ff;">{{ period.period_number }}</span>
+                        </td>
+                        <td data-label="Start Time">{{ period.start_time|time:"H:i" }}</td>
+                        <td data-label="End Time">{{ period.end_time|time:"H:i" }}</td>
+                        <td data-label="Duration">
+                            <span style="font-variant-numeric: tabular-nums;">{{ period.duration_minutes }} min</span>
+                        </td>
+                        <td data-label="Type">
+                            {% if period.is_assembly %}
+                                <span class="badge-glass badge-assembly">Assembly</span>
+                            {% elif period.is_lunch %}
+                                <span class="badge-glass badge-lunch">Lunch</span>
+                            {% elif period.is_break %}
+                                <span class="badge-glass badge-break">Break</span>
+                            {% else %}
+                                <span class="badge-glass badge-normal">Normal</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Special Activity">{{ period.special_activity|default:"—" }}</td>
+                        <td data-label="Day">{{ period.get_days_display }}</td>
+                        <td data-label="Actions">
+                            <div class="action-group">
+                                <a href="{% url 'period_detail' period.pk %}" class="btn-glass btn-glass-sm" title="View Period">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'period_update' period.pk %}" class="btn-glass btn-glass-secondary btn-glass-sm" title="Edit Period">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'period_delete' period.pk %}" class="btn-glass btn-glass-danger btn-glass-sm" title="Delete Period">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if user.is_superuser and not request.school %}10{% else %}9{% endif %}" class="glass-empty">
+                            <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                            No periods defined for this institution.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Class</th>
-            <th>Name</th>
-            <th>Wing</th>
-            <th>Strength</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for period in periods %}
-        <tr>
-            <td>{{ period.class_instance.name }}</td>
-            <td>{{ period.name }}</td>
-            <td>{{ period.wing }}</td>
-            <td>{{ period.student_strength }}</td>
-            <td>
-                <a href="{% url 'period_detail' period.pk %}" class="btn btn-sm btn-outline-primary">View</a>
-                <a href="{% url 'period_update' period.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-                <a href="{% url 'period_delete' period.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-center">No periods added yet.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+<script>
+function filterWing(wing, btn) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    const rows = document.querySelectorAll('.period-row');
+    rows.forEach(row => {
+        if (wing === 'all' || row.getAttribute('data-wing') === wing) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
 {% endblock %}

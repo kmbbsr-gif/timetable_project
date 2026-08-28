@@ -5,6 +5,7 @@
 {% block content %}
 <div class="container">
     <h2>Generate Timetable</h2>
+
 {% if messages %}
     {% for message in messages %}
         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -13,6 +14,27 @@
         </div>
     {% endfor %}
 {% endif %}
+    {% if errors %}
+    <div class="alert alert-danger">
+        <h5><i class="bi bi-exclamation-triangle-fill"></i> Cannot generate timetable — please fix the following:</h5>
+        <ul class="mb-0">
+            {% for issue in errors %}
+            <li>{{ issue }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if warnings %}
+    <div class="alert alert-info">
+        <h5><i class="bi bi-info-circle"></i> Notice:</h5>
+        <ul class="mb-0">
+            {% for issue in warnings %}
+            <li>{{ issue }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
     <form method="post">
         {% csrf_token %}
         <div class="mb-3">
@@ -20,7 +42,7 @@
             <select name="school_id" id="school_id" class="form-select" required>
                 <option value="">-- Select --</option>
                 {% for school in schools %}
-                <option value="{{ school.id }}">{{ school.name }}</option>
+                <option value="{{ school.id }}" {% if school.id|stringformat:"s" == selected_school_id %}selected{% endif %}>{{ school.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -29,7 +51,7 @@
             <select name="session_id" id="session_id" class="form-select" required>
                 <option value="">-- Select --</option>
                 {% for session in sessions %}
-                <option value="{{ session.id }}">{{ session.name }}</option>
+                <option value="{{ session.id }}" {% if session.id|stringformat:"s" == selected_session_id %}selected{% endif %}>{{ session.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -37,4 +59,63 @@
         <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+<!-- Partial Match Confirmation Modal -->
+{% if partial_reports %}
+<div class="modal fade show" id="partialMatchModal" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">⚠️ Combined Class Partial Match Alert</h5>
+            </div>
+            <div class="modal-body">
+                <p class="fw-semibold">The engine could not find a single common slot that fits 100% of all requested classes in combination. Here is what was found:</p>
+                
+                {% for report in partial_reports %}
+                    <div class="card mb-3 border-warning">
+                        <div class="card-body">
+                            <h6><strong>Teacher:</strong> {{ report.teacher_name }} &nbsp;|&nbsp; <strong>Subject:</strong> {{ report.subject_name }}</h6>
+                            <p class="mb-2">
+                                Found common slot for <strong>{{ report.max_found }} out of {{ report.total_requested }}</strong> requested classes at 
+                                <span class="badge bg-primary">{{ report.best_slot }}</span>
+                            </p>
+
+                            <div class="row text-sm">
+                                <div class="col-md-6">
+                                    <strong class="text-success">✅ Available to Combine ({{ report.available_sections|length }}):</strong>
+                                    <ul class="small mb-0 text-muted">
+                                        {% for sec in report.available_sections %}
+                                            <li>{{ sec }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong class="text-danger">❌ Blocked / Conflicts ({{ report.blocked_sections|length }}):</strong>
+                                    <ul class="small mb-0 text-muted">
+                                        {% for sec in report.blocked_sections %}
+                                            <li>{{ sec }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+                <p class="text-muted small mb-0">Would you like to proceed by scheduling the combination for the available classes only, or cancel to fix the conflicts manually?</p>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'generate_timetable' %}" class="btn btn-secondary">Cancel & Fix Manually</a>
+                
+                <form method="post" action="{% url 'generate_timetable' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="school_id" value="{{ selected_school_id }}">
+                    <input type="hidden" name="session_id" value="{{ selected_session_id }}">
+                    <input type="hidden" name="allow_partial" value="true">
+                    <button type="submit" class="btn btn-warning">Proceed with Partial Combination</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

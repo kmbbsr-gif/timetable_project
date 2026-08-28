@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Subject-wise Detail – {{ class.name }} {{ section.name }}{% endblock %}
+
+{% block content %}
+<h2>Subject-wise Period Allocation</h2>
+<h4>{{ class.name }} – {{ section.name }}</h4>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Subject</th>
+            <th>Assigned (Planned)</th>
+            <th>Scheduled (Actual)</th>
+            <th>Difference</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in subject_data %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.assigned }}</td>
+            <td>{{ item.scheduled }}</td>
+            <td>
+                <span class="badge {% if item.difference > 0 %}bg-danger{% elif item.difference < 0 %}bg-info{% else %}bg-success{% endif %}">
+                    {{ item.difference }}
+                </span>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No assignments found.</td></tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr class="table-primary">
+            <th>Total</th>
+            <th>{{ total_assigned }}</th>
+            <th>{{ total_scheduled }}</th>
+            <th>{{ total_difference }}</th>
+        </tr>
+    </tfoot>
+</table>
+
+<a href="{% url 'class_summary' %}" class="btn btn-secondary mt-3">Back to Summary</a>
+{% endblock %}

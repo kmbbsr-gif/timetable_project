@@ -6,4 +6,4 @@ def get_average_load():
     active_teachers = Teacher.objects.filter(is_active=True).count()
     if active_teachers == 0:
         return 0
-    return int(round(total_periods / active_teachers))  # round to nearest integer
+    return int(round(total_periods / active_teachers))

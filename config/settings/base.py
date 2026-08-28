@@ -1,22 +1,20 @@
 import os
 from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# ─── Paths ────────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load environment variables
 load_dotenv(BASE_DIR / '.env')
 
-# SECURITY WARNING: keep the secret key used in production secret!
+# ─── Core Django ──────────────────────────────────────────────────────────────
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-change-me')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')]
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
-
-# Application definition
+# ─── Apps ─────────────────────────────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -27,7 +25,6 @@ INSTALLED_APPS = [
 
     # Third-party
     'rest_framework',
-    # 'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
     'drf_spectacular',
@@ -40,12 +37,15 @@ INSTALLED_APPS = [
     'apps.teachers',
     'apps.subjects',
     'apps.timetable',
-    # 'apps.reports',
-    # # 'apps.import_export',
-    # 'apps.analytics',
-    # 'apps.users',
-    # # 'apps.utils',
+    'apps.users',
 ]
+
+# ─── Middleware ───────────────────────────────────────────────────────────────
+# NOTE: Removed duplicates and conflicting LoginRequiredMiddleware.
+# You had BOTH apps.users.middleware.LoginRequiredMiddleware (custom)
+# AND django.contrib.auth.middleware.LoginRequiredMiddleware (built-in).
+# Using Django 5.0+ built-in only. Remove apps/users/middleware.py if unused.
+# D:\timetable_project\config\settings\base.py
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -54,6 +54,11 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.users.middleware.LoginRequiredMiddleware',
+    
+    # Single tenant resolution middleware placed after auth
+    'apps.schools.middleware.TenantMiddleware',
+
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
@@ -61,6 +66,9 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'config.urls'
 
+ROOT_URLCONF = 'config.urls'
+
+# ─── Templates ────────────────────────────────────────────────────────────────
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -72,6 +80,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.schools.context_processors.active_tenant_context',
             ],
         },
     },
@@ -79,7 +88,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database
+# ─── Database ─────────────────────────────────────────────────────────────────
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -87,7 +96,7 @@ DATABASES = {
     }
 }
 
-# Password validation
+# ─── Auth ─────────────────────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -95,13 +104,25 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+LOGIN_URL = '/users/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Django 5.0+ built-in LoginRequiredMiddleware exempt list
+# LOGIN_REQUIRED_IGNORE_VIEW_NAMES = [
+#     'login',
+#     'logout',
+#     'register',
+#     'password_reset',
+# ]
+
+# ─── Internationalization ─────────────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# ─── Static / Media ───────────────────────────────────────────────────────────
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -109,10 +130,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# REST Framework
+# ─── DRF ──────────────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -128,28 +148,21 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 50,
 }
 
-# JWT Settings
-from datetime import timedelta
+# ─── JWT (configure when rest_framework_simplejwt is enabled) ─────────────────
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True  # For development only
+# ─── CORS ─────────────────────────────────────────────────────────────────────
+CORS_ALLOW_ALL_ORIGINS = True  # Development only — restrict in production
 
-# Celery
-CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-
-# Celery (optional)
+# ─── Celery ───────────────────────────────────────────────────────────────────
 try:
-    import celery  # noqa
-    CELERY_BROKER_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
-    CELERY_RESULT_BACKEND = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    import celery  # noqa: F401
+    _redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+    CELERY_BROKER_URL = _redis_url
+    CELERY_RESULT_BACKEND = _redis_url
     CELERY_ACCEPT_CONTENT = ['json']
     CELERY_TASK_SERIALIZER = 'json'
     CELERY_RESULT_SERIALIZER = 'json'
@@ -157,7 +170,7 @@ except ImportError:
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
 
-# Spectacular (OpenAPI)
+# ─── Spectacular (OpenAPI) ────────────────────────────────────────────────────
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Timetable Generation API',
     'DESCRIPTION': 'Professional School Timetable Application API',
@@ -165,7 +178,7 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# Logging (basic)
+# ─── Logging ──────────────────────────────────────────────────────────────────
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -179,11 +192,14 @@ LOGGING = {
         'level': 'INFO',
     },
 }
-# Temporary fix for Django 5.0 + Python 3.14
+
+# ─── Temporary fix: Django 5.0 + Python 3.14 Context.copy issue ───────────────
 import copy
 from django.template import Context
+
 def _copy(self):
     duplicate = super(Context, self).__copy__()
     duplicate.dicts = self.dicts[:]
     return duplicate
+
 Context.__copy__ = _copy

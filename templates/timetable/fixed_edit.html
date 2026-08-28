@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ view.title|default:"Edit Fixed Entry" }} - Keshab Sir's School Studio{% endblock %}
+
+{% block content %}
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+    }
+
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        position: relative;
+        z-index: 2;
+        max-width: 750px;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem 2rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-title i { color: #00d4ff; }
+
+    .glass-body { padding: 2rem; }
+
+    .form-label {
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .glass-body input[type="text"],
+    .glass-body input[type="number"],
+    .glass-body select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: #ffffff;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .glass-body input:focus,
+    .glass-body select:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #00d4ff;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    .glass-body option {
+        background: #1e1b4b;
+        color: #ffffff;
+    }
+
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff;
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+    }
+
+    .field-error {
+        color: #ff6b6b;
+        font-size: 0.85rem;
+        margin-top: 0.4rem;
+    }
+
+    .info-strip {
+        background: rgba(0, 212, 255, 0.08);
+        border: 1px solid rgba(0, 212, 255, 0.25);
+        border-radius: 12px;
+        padding: 0.9rem 1.2rem;
+        color: #67e8f9;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid">
+        
+        <div class="glass-card">
+            <div class="glass-header">
+                <h1 class="glass-title">
+                    <i class="bi bi-pencil-square"></i> Edit Fixed Entry
+                </h1>
+            </div>
+
+            <div class="glass-body">
+                <div class="info-strip">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Target: <strong>{{ entry.class_instance.name }} - {{ entry.section.name }}</strong> ({{ entry.school.name }})
+                </div>
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger bg-danger bg-opacity-25 border-danger text-white rounded-3 mb-4">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% for field in form %}
+                        <div class="mb-4">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="text-white-50 d-block mt-1">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% if field.errors %}
+                                <div class="field-error">
+                                    {% for error in field.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top border-white border-opacity-10">
+                        <a href="{% url 'manage_fixed_entries' %}" class="btn-glass btn-glass-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn-glass">
+                            <i class="bi bi-check2"></i> Update Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -4,13 +4,10 @@ from .views import (
     ClassListView, ClassDetailView, ClassCreateView, ClassUpdateView, ClassDeleteView,
     SectionListView, SectionDetailView, SectionCreateView, SectionUpdateView, SectionDeleteView,
     RoomListView, RoomDetailView, RoomCreateView, RoomUpdateView, RoomDeleteView,
-    PeriodListView, PeriodDetailView, PeriodCreateView, PeriodUpdateView, PeriodDeleteView, ClassSubjectListView, ClassSubjectDetailView,
-    ClassSubjectCreateView, ClassSubjectUpdateView,
-    ClassSubjectDeleteView,
-)
-from .views import (
-    # ... existing imports ...
-    bulk_create_periods,
+    PeriodListView, PeriodDetailView, PeriodCreateView, PeriodUpdateView, PeriodDeleteView, 
+    SubjectListView, SubjectDetailView, SubjectCreateView, SubjectUpdateView, SubjectDeleteView,
+    ClassSubjectListView, ClassSubjectDetailView, ClassSubjectCreateView, ClassSubjectUpdateView, ClassSubjectDeleteView,
+    bulk_create_periods
 )
 
 urlpatterns = [

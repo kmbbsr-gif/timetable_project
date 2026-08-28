@@ -1,33 +1,32 @@
+# D:\timetable_project\config\urls.py
+
 from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
-from apps.schools.views import dashboard 
+from apps.schools.views import dashboard
 from django.conf import settings
 from django.conf.urls.static import static
 
+admin.site.site_header = "Keshab Sir's School Studio Admin"
+admin.site.site_title = "Keshab Sir's School Studio"
+admin.site.index_title = "Welcome to Keshab Sir's School Studio"
+
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('system-master-panel-99/', admin.site.urls),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('', dashboard, name='dashboard'),   # root
-    path('dashboard/', dashboard, name='dashboard'),
+
+    path('', dashboard, name='dashboard'),
+    path('dashboard/', dashboard, name='dashboard_alias'),
+
+    path('users/', include('apps.users.urls')),
+    path('accounts/', include('apps.users.urls')),
     path('schools/', include('apps.schools.urls')),
     path('academic/', include('apps.academic.urls')),
-    # Include only apps that exist for now
-    path('api/v1/', include('apps.schools.urls')),
+    # KEEP ONLY THIS ONE for subjects:
     path('subjects/', include('apps.subjects.urls')),
     path('teachers/', include('apps.teachers.urls')),
     path('timetable/', include('apps.timetable.urls')),
-    # path('generate/', generate_timetable, name='generate_timetable'),
-    # path('api/v1/', include('apps.academic.urls')),      # uncomment later
-    # path('api/v1/', include('apps.teachers.urls')),      # uncomment later
-    # path('api/v1/', include('apps.subjects.urls')),      # uncomment later
-    # path('api/v1/', include('apps.timetable.urls')),     # uncomment later
-    # path('api/v1/', include('apps.reports.urls')),       # uncomment later
-    # path('api/v1/', include('apps.import_export.urls')), # uncomment later
-    # path('api/v1/', include('apps.analytics.urls')),     # uncomment later
-    # path('api/v1/', include('apps.users.urls')),         # uncomment later
 ]
 
 if settings.DEBUG:

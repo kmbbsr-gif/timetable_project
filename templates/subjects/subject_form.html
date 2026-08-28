@@ -1,13 +1,358 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ view.title|default:"Subject Form" }}{% endblock %}
+{% block title %}{{ view.title|default:"Subject Form" }} - Keshab Sir's School Studio{% endblock %}
 
 {% block content %}
-<h2>{{ view.title|default:"Subject" }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a href="{% url 'subject_list' %}" class="btn btn-secondary">Cancel</a>
-</form>
+<style>
+    .form-section {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        overflow: hidden;
+        background: white;
+    }
+    .form-section:hover {
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .section-header {
+        padding: 20px 28px;
+        font-weight: 600;
+        font-size: 1.05rem;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+    }
+    .section-body {
+        padding: 32px;
+        background: #fff;
+    }
+    .form-floating-custom {
+        position: relative;
+        margin-bottom: 24px;
+    }
+    .form-floating-custom label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: #475569;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .form-floating-custom input,
+    .form-floating-custom select {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.25s ease;
+        background: #f8fafc;
+        color: #1e293b;
+    }
+    .form-floating-custom input[type="color"] {
+        height: 48px;
+        padding: 6px;
+        cursor: pointer;
+    }
+    .form-floating-custom input:focus,
+    .form-floating-custom select:focus {
+        outline: none;
+        border-color: #4f46e5;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+    .error-text {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 500;
+    }
+    .hint-box {
+        font-size: 0.82rem;
+        color: #64748b;
+        margin-top: 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .page-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 16px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(79, 70, 229, 0.3);
+    }
+    .page-header h1 {
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.6rem;
+    }
+    .page-header p {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border: none;
+        padding: 14px 36px;
+        font-weight: 600;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        transition: all 0.3s ease;
+        color: white;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        color: white;
+    }
+    .btn-cancel {
+        padding: 14px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: 2px solid #dee2e6;
+        color: #6c757d;
+        background: white;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+    .btn-cancel:hover {
+        border-color: #adb5bd;
+        color: #495057;
+        background: #f8f9fa;
+    }
+    .btn-delete-action {
+        padding: 14px 26px;
+        border-radius: 12px;
+        font-weight: 600;
+        background: #fee2e2;
+        border: 2px solid #fca5a5;
+        color: #b91c1c;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-delete-action:hover {
+        background: #ef4444;
+        border-color: #dc2626;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+    }
+    .action-bar {
+        background: white;
+        padding: 24px 30px;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 24px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+    .school-display-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-weight: 700;
+        color: #334155;
+    }
+    .form-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 768px) {
+        .page-header { padding: 20px; }
+        .section-body { padding: 20px; }
+        .action-bar { flex-direction: column; align-items: stretch; }
+        .btn-save, .btn-cancel, .btn-delete-action { width: 100%; text-align: center; justify-content: center; }
+        .form-row-2, .form-row-3 { grid-template-columns: 1fr; gap: 0; }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="page-header">
+        <h1>📖 {{ view.title|default:"Subject Management" }}</h1>
+        <p>Define academic subjects and standard timetable abbreviation codes</p>
+    </div>
+
+    {% if form.errors %}
+    <div class="alert alert-danger rounded-3 mb-4 shadow-sm" role="alert">
+        <strong>Please correct the errors below:</strong>
+        <ul class="mb-0 mt-2">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-8">
+                <div class="form-section">
+                    <div class="section-header">
+                        📖 Subject Information
+                    </div>
+                    <div class="section-body">
+                        <!-- School / Institution Field -->
+                        <div class="form-floating-custom">
+                            <label for="{{ form.school.id_for_label }}">School / Institution</label>
+                            {% if user.is_superuser %}
+                                {{ form.school }}
+                                {% if form.school.errors %}
+                                    <div class="error-text">⚠ {{ form.school.errors|first }}</div>
+                                {% endif %}
+                            {% else %}
+                                <div class="school-display-box">
+                                    <span class="text-primary fs-5">🏫</span>
+                                    <span>{{ request.school.name|default:"Your Linked School" }}</span>
+                                </div>
+                                {% if request.school %}
+                                    <input type="hidden" name="school" value="{{ request.school.id }}">
+                                {% elif form.school.value %}
+                                    <input type="hidden" name="school" value="{{ form.school.value }}">
+                                {% else %}
+                                    {{ form.school }}
+                                {% endif %}
+                            {% endif %}
+                            <div class="hint-box">
+                                <span>ℹ️</span> This subject will belong exclusively to your school curriculum.
+                            </div>
+                        </div>
+
+                        <!-- Subject Name & Code -->
+                        <div class="form-row-2">
+                            <!-- Name -->
+                            <div class="form-floating-custom">
+                                <label for="id_subject_name">
+                                    Subject Full Name <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                <div class="hint-box">
+                                    <span>✍️</span> e.g., <em>Mathematics</em>, <em>English Language</em>, <em>Physics</em>
+                                </div>
+                                {% if form.name.errors %}
+                                    <div class="error-text">⚠ {{ form.name.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Code -->
+                            <div class="form-floating-custom">
+                                <label for="id_subject_code">
+                                    Subject Short Code <span class="text-danger">*</span>
+                                </label>
+                                {{ form.code }}
+                                <div class="hint-box">
+                                    <span>🏷️</span> e.g., <em>MATH</em>, <em>ENG</em>, <em>PHY</em> (used on timetable grids)
+                                </div>
+                                {% if form.code.errors %}
+                                    <div class="error-text">⚠ {{ form.code.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Color & Gap Constraints -->
+                        <div class="form-row-3">
+                            <div class="form-floating-custom">
+                                <label for="{{ form.color.id_for_label }}">Grid Color</label>
+                                {{ form.color }}
+                                {% if form.color.errors %}
+                                    <div class="error-text">⚠ {{ form.color.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.min_gap_periods.id_for_label }}">Min Gap Periods</label>
+                                {{ form.min_gap_periods }}
+                                {% if form.min_gap_periods.errors %}
+                                    <div class="error-text">⚠ {{ form.min_gap_periods.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.max_gap_periods.id_for_label }}">Max Gap Periods</label>
+                                {{ form.max_gap_periods }}
+                                {% if form.max_gap_periods.errors %}
+                                    <div class="error-text">⚠ {{ form.max_gap_periods.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Action Bar with Edit & Delete Integration -->
+                <div class="action-bar">
+                    <button type="submit" class="btn btn-save">
+                        <span>💾</span> Save Subject
+                    </button>
+                    
+                    <a href="{% url 'subject_list' %}" class="btn btn-cancel">
+                        <span>←</span> Cancel
+                    </a>
+
+                    {% if object and object.pk %}
+                        <a href="{% url 'subject_delete' object.pk %}" class="btn btn-delete-action ms-auto" title="Delete this subject">
+                            <span>🗑️</span> Delete Subject
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Auto Suggest Code Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const nameInput = document.getElementById('id_subject_name') || document.querySelector('input[name="name"]');
+    const codeInput = document.getElementById('id_subject_code') || document.querySelector('input[name="code"]');
+
+    if (nameInput && codeInput) {
+        nameInput.addEventListener('input', function() {
+            if (!codeInput.dataset.touched && !codeInput.value) {
+                const words = nameInput.value.trim().split(/\s+/);
+                if (words.length === 1 && words[0].length >= 3) {
+                    codeInput.value = words[0].substring(0, 4).toUpperCase();
+                } else if (words.length > 1) {
+                    codeInput.value = words.map(w => w[0]).join('').substring(0, 5).toUpperCase();
+                }
+            }
+        });
+
+        codeInput.addEventListener('focus', function() {
+            codeInput.dataset.touched = "true";
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -15,6 +15,7 @@ class Subject(models.Model):
 
     class Meta:
         unique_together = ['school', 'code']
+        ordering = ['name', 'code']   # <-- sort alphabetically by name, then by code
 
     def __str__(self):
         return self.name

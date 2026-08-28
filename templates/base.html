@@ -1,81 +1,259 @@
+{% load static %}
+{% load user_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Timetable System{% endblock %}</title>
+    <title>{% block title %}Keshab Sir's School Studio{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <!-- Extra CSS per page -->
     {% block extra_css %}{% endblock %}
 
-    <!-- Print‑friendly styles (applies when printing) -->
+    <!-- Print‑friendly styles -->
     <style media="print">
-        .no-print {
-            display: none !important;
+        .no-print { display: none !important; }
+        .table { font-size: 10pt; }
+        .table-bordered td, .table-bordered th { border: 1px solid #000 !important; }
+        body { padding: 0.5in; }
+        .timetable-cell .entry { background: none !important; }
+        .navbar, .btn, .no-print { display: none !important; }
+        .table-bordered { border: 1px solid #000 !important; }
+    </style>
+
+    <!-- Custom Navbar & Dropdown Styles -->
+    <style>
+        .navbar-brand {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
-        .table {
-            font-size: 10pt;
+        .navbar-brand img {
+            height: 50px;
+            width: auto;
+            margin-right: 10px;
         }
-        .table-bordered td,
-        .table-bordered th {
-            border: 1px solid #000 !important;
+        .navbar-nav .nav-link {
+            font-size: 1rem;
+            padding: 0.5rem 0.8rem;
         }
-        body {
-            padding: 0.5in;
+        .dropdown-menu .dropdown-item {
+            font-size: 0.95rem;
         }
-        .timetable-cell .entry {
-            background: none !important;
+        /* --- Navbar item separation --- */
+        .navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        /* Hide navbar, buttons, and other non-print elements */
-        .navbar,
-        .btn,
-        .no-print {
-            display: none !important;
+        .navbar-nav .nav-item {
+            position: relative;
         }
-        .table-bordered {
-            border: 1px solid #000 !important;
+        .navbar-nav .nav-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -0.5rem;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: rgba(255,255,255,0.25);
+        }
+        .navbar-nav .dropdown-toggle {
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .navbar-nav .dropdown-toggle:hover,
+        .navbar-nav .dropdown-toggle:focus {
+            background: rgba(255,255,255,0.15);
+        }
+        /* --- Dropdown items distinction --- */
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            border-left: 3px solid transparent;
+            transition: all 0.15s ease;
+        }
+        .dropdown-item:hover {
+            background-color: rgba(13, 110, 253, 0.08);
+            border-left-color: #0d6efd;
+        }
+        .dropdown-divider {
+            border-top: 2px solid rgba(0,0,0,0.1);
+            margin: 0.3rem 0;
+        }
+        /* --- Responsive --- */
+        @media (max-width: 992px) {
+            .navbar-nav .nav-item:not(:last-child)::after {
+                display: none;
+            }
+            .navbar-nav {
+                gap: 0.25rem;
+            }
+            .navbar-brand { font-size: 1.4rem; }
+            .navbar-brand img { height: 40px; }
         }
     </style>
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 </head>
 <body>
     <!-- Navbar – hidden on print -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary no-print">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">🏫 Timetable Pro</a>
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <img src="{% static 'images/app_logo.png' %}" alt="Keshab Sir's School Studio">
+                <span>Keshab Sir's School Studio</span>
+            </a>
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'school_list' %}">Schools</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'session_list' %}">Sessions</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'class_list' %}">Classes</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'section_list' %}">Sections</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'room_list' %}">Rooms</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'period_list' %}">Periods</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'subject_list' %}">Subjects</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'teacher_list' %}">Teachers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'classsubject_list' %}">Class-Subject</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'teacherassignment_list' %}">Assign Teachers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'bulk_period_create' %}">Bulk Add Periods</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'timetable_index' %}">Timetables</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'teacher_timetable_index' %}">Teacher Timetable</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'subject_timetable_index' %}">Subject Timetable</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'master_timetable' %}">Master</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'free_periods' %}">Free Teachers</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'free_slots' %}">Free Slots</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'generate_timetable' %}">Generate</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'manage_absence' %}">Absence</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'free_periods_by_date' %}">Free by Date</a></li>
+                    <!-- Dashboard -->
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+
+                    {% if user.is_authenticated %}
+                        <!-- Master Superadmin Workspace Switcher (Visible ONLY to Superuser) -->
+                        {% if user.is_superuser %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle btn btn-outline-warning text-white px-3 py-1 rounded-pill" href="#" id="masterSchoolSwitcher" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-color: #ffc107;">
+                                    <i class="bi bi-buildings-fill text-warning me-1"></i>
+                                    {% if current_active_school %}
+                                        <span class="fw-bold">{{ current_active_school.name }}</span>
+                                    {% elif request.school %}
+                                        <span class="fw-bold">{{ request.school.name }}</span>
+                                    {% else %}
+                                        <span class="text-warning">Select School Workspace</span>
+                                    {% endif %}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="masterSchoolSwitcher">
+                                    <li class="dropdown-header text-muted small"><i class="bi bi-shield-lock"></i> MASTER WORKSPACE SELECTOR</li>
+                                    {% for s in all_schools_for_master %}
+                                        <li>
+                                            <a class="dropdown-item d-flex justify-content-between align-items-center {% if request.school and request.school.id == s.id %}active bg-primary text-white{% endif %}" 
+                                               href="{% url 'switch_school_context' s.id %}">
+                                                <span>{{ s.name }}</span>
+                                                {% if request.school and request.school.id == s.id %}<i class="bi bi-check-lg"></i>{% endif %}
+                                            </a>
+                                        </li>
+                                    {% empty %}
+                                        <li><span class="dropdown-item text-muted">No schools registered</span></li>
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endif %}
+
+                        <!-- Show groups for debugging (remove later) -->
+                        <li class="nav-item"><span class="nav-link text-warning">Groups: {{ user.groups.all|join:", " }}</span></li>
+
+                        {% if user.is_superuser or user|has_group:'Admin' or user|has_group:'Coordinator' %}
+                            <!-- Master Data Dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="masterDataDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-database"></i> Master Data
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if user.is_superuser %}
+                                        <li><a class="dropdown-item" href="{% url 'school_list' %}"><i class="bi bi-buildings"></i> All Schools (Master)</a></li>
+                                    {% elif request.school %}
+                                        <li><a class="dropdown-item" href="{% url 'school_update' request.school.id %}"><i class="bi bi-building"></i> School Profile</a></li>
+                                    {% endif %}
+                                    <li><a class="dropdown-item" href="{% url 'session_list' %}"><i class="bi bi-calendar-range"></i> Sessions</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'class_list' %}"><i class="bi bi-book"></i> Classes</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'section_list' %}"><i class="bi bi-layers"></i> Sections</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'room_list' %}"><i class="bi bi-door-open"></i> Rooms</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'period_list' %}"><i class="bi bi-clock"></i> Periods</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'subject_list' %}"><i class="bi bi-file-earmark-text"></i> Subjects</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'manage_fixed_entries' %}"><i class="bi bi-calendar-plus"></i> Fixed Activities</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'bulk_period_create' %}"><i class="bi bi-plus-circle"></i> Bulk Add Periods</a></li>
+                                </ul>
+                            </li>
+
+                            <!-- Teachers Dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="teachersDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-people"></i> Teachers
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'teacher_list' %}"><i class="bi bi-person-lines-fill"></i> Teachers</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'classsubject_list' %}"><i class="bi bi-journal-bookmark-fill"></i> Class-Subject</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'teacherassignment_list' %}"><i class="bi bi-person-plus"></i> Assign Teachers</a></li>
+                                </ul>
+                            </li>
+
+                            <!-- Timetable Dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="timetableDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-calendar-event"></i> Timetable
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'timetable_index' %}"><i class="bi bi-list-ul"></i> Timetables</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'teacher_timetable_index' %}"><i class="bi bi-person-video"></i> Teacher Timetable</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'subject_timetable_index' %}"><i class="bi bi-file-text"></i> Subject Timetable</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'master_timetable' %}"><i class="bi bi-grid"></i> Master</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'free_periods' %}"><i class="bi bi-person-x"></i> Free Teachers</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'free_slots' %}"><i class="bi bi-clock-history"></i> Free Slots</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'free_periods_by_date' %}"><i class="bi bi-calendar-date"></i> Free by Date</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'generate_timetable' %}"><i class="bi bi-gear"></i> Generate</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'manage_absence' %}"><i class="bi bi-person-x"></i> Absence</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'class_summary' %}"><i class="bi bi-bar-chart"></i> Class Summary</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+
+                        <!-- Teacher‑specific -->
+                        {% if user|has_group:'Teacher' %}
+                            <li class="nav-item"><a class="nav-link" href="{% url 'teacher_timetable_index' %}"><i class="bi bi-person-video"></i> My Timetable</a></li>
+                        {% endif %}
+
+                        <!-- System Superadmin panel -->
+                        {% if user.is_superuser %}
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" href="/system-master-panel-99/">
+                                    <i class="bi bi-shield-lock"></i> Master Admin
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        <!-- User dropdown with logout form -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-circle"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-box-arrow-right"></i> Logout
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <!-- Not logged in -->
+                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'register_school' %}"><i class="bi bi-building-add"></i> Register School</a></li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Hidden element to pass Django messages into toast script -->
+    <div style="display: none;">
+        {% if messages %}
+            {% for message in messages %}
+                <span data-django-message="{{ message.tags }}">{{ message }}</span>
+            {% endfor %}
+        {% endif %}
+    </div>
 
     <!-- Main content -->
     <div class="container mt-4">
@@ -86,5 +264,45 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     {% block extra_js %}{% endblock %}
+
+    <!-- Toast Container -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <!-- Toast Notification Script -->
+    <script>
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            let bgType = type;
+            if (type === 'error') bgType = 'danger';
+
+            const toast = document.createElement('div');
+            toast.className = `toast align-items-center text-bg-${bgType} border-0 show`;
+            toast.role = 'alert';
+            toast.ariaLive = 'assertive';
+            toast.ariaAtomic = 'true';
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('[data-django-message]').forEach(el => {
+                const text = el.textContent;
+                const type = el.dataset.djangoMessage || 'info';
+                showToast(text, type);
+            });
+        });
+    </script>
 </body>
 </html>

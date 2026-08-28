@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Fixed Entry - Keshab Sir's School Studio{% endblock %}
+
+{% block content %}
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+    }
+
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        position: relative;
+        z-index: 2;
+        max-width: 600px;
+        margin: 0 auto;
+        overflow: hidden;
+    }
+
+    .glass-header {
+        background: rgba(255, 107, 107, 0.15);
+        border-bottom: 1px solid rgba(255, 107, 107, 0.3);
+        padding: 1.5rem 2rem;
+    }
+
+    .glass-title {
+        color: #ff6b6b;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-body {
+        padding: 2rem;
+        color: #ffffff;
+    }
+
+    .btn-glass {
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+    }
+
+    .btn-glass-danger {
+        background: rgba(255, 107, 107, 0.25);
+        border: 1px solid rgba(255, 107, 107, 0.5);
+        color: #ff6b6b;
+    }
+
+    .btn-glass-danger:hover {
+        background: rgba(255, 107, 107, 0.8);
+        color: #ffffff;
+        transform: translateY(-2px);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid">
+        
+        <div class="glass-card">
+            <div class="glass-header">
+                <h1 class="glass-title">
+                    <i class="bi bi-exclamation-triangle"></i> Confirm Deletion
+                </h1>
+            </div>
+
+            <div class="glass-body">
+                <p class="fs-5 mb-4">
+                    Are you sure you want to delete fixed activity <strong>{{ entry.subject.name }}</strong> on <strong>{{ entry.get_day_of_week_display }}</strong> (P{{ entry.period_number }}) for <strong>{{ entry.class_instance.name }} - {{ entry.section.name }}</strong>?
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'manage_fixed_entries' %}" class="btn-glass btn-glass-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn-glass btn-glass-danger">
+                            <i class="bi bi-trash"></i> Yes, Delete Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

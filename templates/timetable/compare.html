@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+{% load timetable_tags %}
+
+{% block title %}Compare Timetables{% endblock %}
+
+{% block extra_css %}
+<style>
+  .views-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    min-height: 70vh;
+  }
+  .view-card {
+    flex: 1 1 0;
+    min-width: 280px;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.2s;
+  }
+  .views-container:has(.view-card:only-child) .view-card {
+    flex: 1 1 100%;
+  }
+  .views-container:has(.view-card:nth-child(2):last-child) .view-card {
+    flex: 1 1 calc(50% - 0.75rem);
+  }
+  .views-container:has(.view-card:nth-child(3):last-child) .view-card {
+    flex: 1 1 calc(33.333% - 1rem);
+  }
+  .view-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+  }
+  .view-card-header .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: #6c757d;
+    padding: 0 0.25rem;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  .view-card-header .close-btn:hover {
+    color: #dc3545;
+  }
+  .view-card-body {
+    padding: 1.25rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .view-card-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    min-height: 400px;
+  }
+  .empty-state {
+    color: #6c757d;
+    text-align: center;
+    padding: 2rem 0;
+  }
+  .empty-state i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  @media (max-width: 768px) {
+    .views-container {
+      flex-direction: column;
+    }
+    .views-container:has(.view-card:only-child) .view-card,
+    .views-container:has(.view-card:nth-child(2):last-child) .view-card,
+    .views-container:has(.view-card:nth-child(3):last-child) .view-card {
+      flex: 1 1 auto;
+    }
+  }
+  .view-toggle-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    align-items: center;
+  }
+  .view-toggle-group .form-check {
+    margin-right: 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Compare Timetables</h2>
+
+<!-- Selection Form -->
+<form method="get" action="{% url 'compare_timetables' %}" id="compareForm">
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label for="class_id" class="form-label">Class</label>
+      <select name="class_id" id="class_id" class="form-select">
+        <option value="">-- Select --</option>
+        {% for cls in classes %}
+          <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
+            {{ cls.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="section_id" class="form-label">Section</label>
+      <select name="section_id" id="section_id" class="form-select">
+        <option value="">-- Select --</option>
+        <!-- Initially populated from server if a class is selected -->
+        {% if selected_class %}
+          {% for section in selected_class.sections.all %}
+            <option value="{{ section.id }}" {% if selected_section and selected_section.id == section.id %}selected{% endif %}>
+              {{ section.name }}
+            </option>
+          {% endfor %}
+        {% endif %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label for="teacher_id" class="form-label">Teacher</label>
+      <select name="teacher_id" id="teacher_id" class="form-select">
+        <option value="">-- Select --</option>
+        {% for t in teachers %}
+          <option value="{{ t.id }}" {% if selected_teacher and selected_teacher.id == t.id %}selected{% endif %}>
+            {{ t.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button type="submit" class="btn btn-primary w-100">Load</button>
+    </div>
+  </div>
+
+  <!-- View toggles -->
+  <div class="view-toggle-group mb-3">
+    <span class="me-2"><strong>Show:</strong></span>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" name="show_master" id="show_master" value="1"
+             {% if request.GET.show_master == '1' or not request.GET.show_class and not request.GET.show_teacher %}checked{% endif %}>
+      <label class="form-check-label" for="show_master">Master</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" name="show_class" id="show_class" value="1"
+             {% if request.GET.show_class == '1' or class_context and not request.GET.show_master and not request.GET.show_teacher %}checked{% endif %}>
+      <label class="form-check-label" for="show_class">Class</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox" name="show_teacher" id="show_teacher" value="1"
+             {% if request.GET.show_teacher == '1' or teacher_context and not request.GET.show_master and not request.GET.show_class %}checked{% endif %}>
+      <label class="form-check-label" for="show_teacher">Teacher</label>
+    </div>
+    <button type="submit" class="btn btn-sm btn-outline-secondary">Apply</button>
+  </div>
+
+  <!-- Hidden fields to preserve selections -->
+  
+</form>
+
+<!-- Views Container -->
+<div class="views-container" id="viewsContainer">
+
+  <!-- MASTER VIEW -->
+  {% if request.GET.show_master == '1' or not request.GET.show_class and not request.GET.show_teacher %}
+    <div class="view-card" id="masterView">
+      <div class="view-card-header">
+        <span><i class="bi bi-table"></i> Master Timetable</span>
+        <button type="button" class="close-btn" data-view="master" title="Close Master">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="view-card-body">
+        {% if selected_class and selected_section %}
+          <iframe src="{% url 'master_timetable' %}?class_id={{ selected_class.id }}&section_id={{ selected_section.id }}" 
+                  width="100%" height="100%" style="min-height: 400px;"></iframe>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-table"></i>
+            <p>Select a class and section to load the Master timetable.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- CLASS VIEW -->
+  {% if request.GET.show_class == '1' or class_context and not request.GET.show_master and not request.GET.show_teacher %}
+    <div class="view-card" id="classView">
+      <div class="view-card-header">
+        <span><i class="bi bi-building"></i> Class Timetable</span>
+        <button type="button" class="close-btn" data-view="class" title="Close Class">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="view-card-body">
+        {% if class_context %}
+          {% include 'timetable/class_view.html' with class=class_context.class section=class_context.section table=class_context.table days_with_indices=class_context.days_with_indices %}
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-building"></i>
+            <p>Select a class and section.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- TEACHER VIEW -->
+  {% if request.GET.show_teacher == '1' or teacher_context and not request.GET.show_master and not request.GET.show_class %}
+    <div class="view-card" id="teacherView">
+      <div class="view-card-header">
+        <span><i class="bi bi-person-badge"></i> Teacher Timetable</span>
+        <button type="button" class="close-btn" data-view="teacher" title="Close Teacher">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="view-card-body">
+        {% if teacher_context %}
+          {% include 'timetable/teacher_view.html' with teacher=teacher_context.teacher table=teacher_context.table days_with_indices=teacher_context.days_with_indices %}
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-person-badge"></i>
+            <p>Select a teacher.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function() {
+    'use strict';
+
+    const classSelect = document.getElementById('class_id');
+    const sectionSelect = document.getElementById('section_id');
+    // Use Django's URL reverse
+    const getSectionsUrl = '{% url "get_sections" %}';
+
+    classSelect.addEventListener('change', function() {
+      const classId = this.value;
+      if (!classId) {
+        sectionSelect.innerHTML = '<option value="">-- Select --</option>';
+        return;
+      }
+      fetch(getSectionsUrl + '?class_id=' + classId)
+        .then(response => response.json())
+        .then(data => {
+          sectionSelect.innerHTML = '<option value="">-- Select --</option>';
+          data.sections.forEach(sec => {
+            const opt = document.createElement('option');
+            opt.value = sec.id;
+            opt.textContent = sec.name;
+            sectionSelect.appendChild(opt);
+          });
+        })
+        .catch(err => console.error('Error loading sections:', err));
+    });
+
+    // Trigger on page load if a class is preselected
+    if (classSelect.value) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+
+    // Close buttons
+    document.querySelectorAll('.close-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const view = this.dataset.view;
+        const checkbox = document.getElementById('show_' + view);
+        if (checkbox) checkbox.checked = false;
+        document.getElementById('compareForm').submit();
+      });
+    });
+
+  })();
+</script>
+{% endblock %}

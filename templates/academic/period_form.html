@@ -1,13 +1,509 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ view.title|default:"Period Form" }}{% endblock %}
+{% block title %}{{ view.title|default:"Period Form" }} - Keshab Sir's School Studio{% endblock %}
 
 {% block content %}
-<h2>{{ view.title|default:"Period" }}</h2>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a href="{% url 'period_list' %}" class="btn btn-secondary">Cancel</a>
-</form>
+<style>
+    .form-section {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        overflow: hidden;
+        background: white;
+        animation: slideUp 0.5s ease-out;
+    }
+    .section-header {
+        padding: 24px 32px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .section-body {
+        padding: 36px;
+        background: #fff;
+    }
+    .form-floating-custom {
+        position: relative;
+        margin-bottom: 28px;
+    }
+    .form-floating-custom:last-child {
+        margin-bottom: 0;
+    }
+    .form-floating-custom label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+    }
+    .form-floating-custom input[type="text"],
+    .form-floating-custom input[type="number"],
+    .form-floating-custom input[type="time"],
+    .form-floating-custom select,
+    .form-floating-custom textarea {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        transition: all 0.25s ease;
+        background: #f8fafc;
+        color: #1e293b;
+        outline: none;
+    }
+    .form-floating-custom input:focus,
+    .form-floating-custom select:focus,
+    .form-floating-custom textarea:focus {
+        border-color: #4f46e5;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+        transform: translateY(-1px);
+    }
+    .school-display-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-weight: 700;
+        color: #334155;
+    }
+    .error-text {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        padding: 8px 12px;
+        background: #fef2f2;
+        border-radius: 8px;
+        border-left: 3px solid #dc2626;
+    }
+    .page-header {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        padding: 36px;
+        border-radius: 20px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 40px rgba(79, 70, 229, 0.35);
+        position: relative;
+        overflow: hidden;
+    }
+    .page-header h1 {
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.6rem;
+    }
+    .page-header p {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        border: none;
+        padding: 14px 36px;
+        font-weight: 700;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(79, 70, 229, 0.45);
+        transition: all 0.3s ease;
+        color: white;
+        font-size: 0.95rem;
+    }
+    .btn-save:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 28px rgba(79, 70, 229, 0.6);
+        filter: brightness(1.1);
+        color: white;
+    }
+    .btn-cancel {
+        padding: 14px 30px;
+        border-radius: 14px;
+        font-weight: 700;
+        border: 2px solid #e2e8f0;
+        color: #64748b;
+        background: white;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        font-size: 0.95rem;
+    }
+    .btn-cancel:hover {
+        border-color: #cbd5e1;
+        color: #334155;
+        background: #f8fafc;
+    }
+    .action-bar {
+        background: white;
+        padding: 24px 32px;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        margin-top: 28px;
+        margin-bottom: 40px;
+        flex-wrap: wrap;
+    }
+    .days-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 8px;
+    }
+    .day-pill {
+        position: relative;
+    }
+    .day-pill input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .day-pill label {
+        display: inline-block;
+        padding: 14px 24px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        color: #475569;
+        margin-bottom: 0;
+        user-select: none;
+    }
+    .day-pill input[type="checkbox"]:checked + label {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        transform: translateY(-2px);
+    }
+    .flag-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        align-items: center;
+    }
+    .flag-item {
+        display: flex;
+        align-items: center;
+        padding: 14px 18px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        gap: 10px;
+    }
+    .flag-item input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        accent-color: #4f46e5;
+        cursor: pointer;
+    }
+    .flag-item label {
+        margin-bottom: 0;
+        cursor: pointer;
+        font-size: 0.95rem;
+        color: #1e293b;
+        font-weight: 600;
+    }
+    .form-row-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 24px;
+    }
+    .form-row-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+    .hint-text {
+        color: #64748b;
+        font-size: 0.85rem;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    @media (max-width: 768px) {
+        .page-header { padding: 24px; }
+        .section-body { padding: 24px; }
+        .action-bar { flex-direction: column; align-items: stretch; }
+        .form-row-2, .form-row-3 { grid-template-columns: 1fr; gap: 0; }
+    }
+</style>
+
+<div class="container-fluid px-4">
+    <div class="page-header">
+        <h1>🕐 {{ view.title|default:"Period" }}</h1>
+        <p>Configure period timings, wing assignment, days, and activity flags</p>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger rounded-4 border-0 mb-4 shadow-sm">
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-10">
+                <div class="form-section">
+                    <div class="section-header">⏱️ Period Configuration</div>
+                    <div class="section-body">
+                        <!-- Row 1: School, Wing, Period Number -->
+                        <div class="form-row-3">
+                            <div class="form-floating-custom">
+                                <label for="{{ form.school.id_for_label }}">School / Campus</label>
+                                {% if user.is_superuser %}
+                                    {{ form.school }}
+                                    {% if form.school.errors %}
+                                        <div class="error-text">⚠ {{ form.school.errors|first }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="school-display-box">
+                                        <span class="text-primary fs-5">🏫</span>
+                                        <span>{{ request.school.name|default:"Your Linked School" }}</span>
+                                    </div>
+                                    {% if request.school %}
+                                        <input type="hidden" name="school" value="{{ request.school.id }}">
+                                    {% else %}
+                                        {{ form.school }}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.wing.id_for_label }}">{{ form.wing.label }}</label>
+                                {{ form.wing }}
+                                {% if form.wing.errors %}
+                                    <div class="error-text">⚠ {{ form.wing.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="{{ form.period_number.id_for_label }}">{{ form.period_number.label }}</label>
+                                {{ form.period_number }}
+                                {% if form.period_number.errors %}
+                                    <div class="error-text">⚠ {{ form.period_number.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Start Time, Duration, End Time -->
+                        <div class="form-row-3">
+                            <div class="form-floating-custom">
+                                <label for="id_start_time">Start Time</label>
+                                <input type="time"
+                                    name="{{ form.start_time.html_name }}"
+                                    id="id_start_time"
+                                    class="form-control"
+                                    value="{% if form.start_time.value %}{{ form.start_time.value|time:'H:i'|default:form.start_time.value|slice:':5' }}{% endif %}"
+                                    {% if form.start_time.field.required %}required{% endif %}>
+                                {% if form.start_time.errors %}
+                                    <div class="error-text">⚠ {{ form.start_time.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="id_duration_minutes">Duration (Minutes)</label>
+                                <input type="number"
+                                    name="{{ form.duration_minutes.html_name }}"
+                                    id="id_duration_minutes"
+                                    class="form-control"
+                                    min="1"
+                                    placeholder="e.g. 45"
+                                    value="{{ form.duration_minutes.value|default:'' }}">
+                                {% if form.duration_minutes.errors %}
+                                    <div class="error-text">⚠ {{ form.duration_minutes.errors|first }}</div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-floating-custom">
+                                <label for="id_end_time">End Time</label>
+                                <input type="time"
+                                    name="{{ form.end_time.html_name }}"
+                                    id="id_end_time"
+                                    class="form-control"
+                                    value="{% if form.end_time.value %}{{ form.end_time.value|time:'H:i'|default:form.end_time.value|slice:':5' }}{% endif %}"
+                                    {% if form.end_time.field.required %}required{% endif %}>
+                                {% if form.end_time.errors %}
+                                    <div class="error-text">⚠ {{ form.end_time.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Days Selection -->
+                        <div class="form-floating-custom">
+                            <label>Days</label>
+                            <div class="days-group">
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="0" id="pd_0"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '0' or v == 0 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_0">Mon</label>
+                                </div>
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="1" id="pd_1"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '1' or v == 1 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_1">Tue</label>
+                                </div>
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="2" id="pd_2"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '2' or v == 2 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_2">Wed</label>
+                                </div>
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="3" id="pd_3"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '3' or v == 3 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_3">Thu</label>
+                                </div>
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="4" id="pd_4"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '4' or v == 4 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_4">Fri</label>
+                                </div>
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="5" id="pd_5"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '5' or v == 5 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_5">Sat</label>
+                                </div>
+                                <div class="day-pill">
+                                    <input type="checkbox" name="days" value="6" id="pd_6"
+                                        {% if form.days.value %}{% for v in form.days.value %}{% if v == '6' or v == 6 %}checked{% endif %}{% endfor %}{% endif %}>
+                                    <label for="pd_6">Sun</label>
+                                </div>
+                            </div>
+                            <div class="hint-text">
+                                <span>ℹ️</span> Select specific days, or leave empty for all days.
+                            </div>
+                            {% if form.days.errors %}
+                                <div class="error-text">⚠ {{ form.days.errors|first }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Row 4: Activity Flags -->
+                        <div class="form-floating-custom">
+                            <label>Period Type</label>
+                            <div class="flag-group">
+                                {% if form.is_assembly %}
+                                <div class="flag-item">
+                                    {{ form.is_assembly }}
+                                    <label for="{{ form.is_assembly.id_for_label }}">Assembly</label>
+                                </div>
+                                {% endif %}
+                                {% if form.is_lunch %}
+                                <div class="flag-item">
+                                    {{ form.is_lunch }}
+                                    <label for="{{ form.is_lunch.id_for_label }}">Lunch</label>
+                                </div>
+                                {% endif %}
+                                {% if form.is_break %}
+                                <div class="flag-item">
+                                    {{ form.is_break }}
+                                    <label for="{{ form.is_break.id_for_label }}">Break</label>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Row 5: Optional Details -->
+                        {% if form.break_duration %}
+                        <div class="form-row-2">
+                            <div class="form-floating-custom">
+                                <label for="{{ form.break_duration.id_for_label }}">{{ form.break_duration.label }}</label>
+                                {{ form.break_duration }}
+                                {% if form.break_duration.errors %}
+                                    <div class="error-text">⚠ {{ form.break_duration.errors|first }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if form.special_activity %}
+                        <div class="form-floating-custom">
+                            <label for="{{ form.special_activity.id_for_label }}">{{ form.special_activity.label }}</label>
+                            {{ form.special_activity }}
+                            {% if form.special_activity.errors %}
+                                <div class="error-text">⚠ {{ form.special_activity.errors|first }}</div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="action-bar">
+                    <button type="submit" class="btn btn-save">
+                        <span>💾</span> Save Period
+                    </button>
+                    <a href="{% url 'period_list' %}" class="btn btn-cancel">
+                        <span>←</span> Cancel
+                    </a>
+                    {% if object %}
+                        <small class="text-muted ms-auto">Period ID: #{{ object.id }}</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- AUTO END TIME CALCULATION SCRIPT -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startTimeInput = document.getElementById('id_start_time');
+    const durationInput = document.getElementById('id_duration_minutes');
+    const endTimeInput = document.getElementById('id_end_time');
+
+    function updateEndTime() {
+        const startTime = startTimeInput.value;
+        const duration = parseInt(durationInput.value, 10);
+
+        if (startTime && !isNaN(duration) && duration > 0) {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startDate = new Date();
+            startDate.setHours(hours, minutes, 0, 0);
+
+            startDate.setMinutes(startDate.getMinutes() + duration);
+
+            const endHours = String(startDate.getHours()).padStart(2, '0');
+            const endMinutes = String(startDate.getMinutes()).padStart(2, '0');
+
+            endTimeInput.value = `${endHours}:${endMinutes}`;
+        }
+    }
+
+    if (startTimeInput && durationInput && endTimeInput) {
+        startTimeInput.addEventListener('change', updateEndTime);
+        startTimeInput.addEventListener('input', updateEndTime);
+        durationInput.addEventListener('input', updateEndTime);
+        
+        if (startTimeInput.value && durationInput.value && !endTimeInput.value) {
+            updateEndTime();
+        }
+    }
+});
+</script>
 {% endblock %}

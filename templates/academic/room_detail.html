@@ -1,20 +1,300 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ object.name }}{% endblock %}
+{% block title %}{{ object.name }} - Room Details{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
-    <h1>{{ object.name }}</h1>
-    <div>
-        <a href="{% url 'room_update' object.pk %}" class="btn btn-secondary">Edit</a>
-        <a href="{% url 'room_delete' object.pk %}" class="btn btn-danger">Delete</a>
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Floating ambient orbs for depth */
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        animation: float 20s ease-in-out infinite;
+    }
+
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+        animation-delay: 0s;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* Subtle top highlight for glass realism */
+    .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    /* ─── Glass Header ─── */
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-title i {
+        color: #00d4ff;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+    }
+
+    /* ─── Body Content ─── */
+    .glass-body {
+        padding: 2rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-box {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 1.25rem;
+        transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .info-box:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #00d4ff;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    /* ─── Glass Badges & Buttons ─── */
+    .badge-current {
+        background: rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .badge-inactive {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff;
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        border-color: rgba(0, 212, 255, 0.6);
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.35);
+        text-decoration: none;
+    }
+
+    .btn-glass-danger {
+        background: rgba(255, 107, 107, 0.15);
+        border: 1px solid rgba(255, 107, 107, 0.35);
+        color: #ff6b6b;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
+    }
+
+    .btn-glass-danger:hover {
+        background: rgba(255, 107, 107, 0.3);
+        border-color: rgba(255, 107, 107, 0.6);
+        color: #ffffff;
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.35);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #ffffff;
+    }
+
+    .action-group {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid">
+        
+        <div class="glass-card">
+            
+            <!-- Header -->
+            <div class="glass-header">
+                <h1 class="glass-title">
+                    <i class="bi bi-door-open"></i> {{ object.name }}
+                </h1>
+                <div class="action-group">
+                    <a href="{% url 'room_update' object.pk %}" class="btn-glass btn-glass-secondary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href="{% url 'room_delete' object.pk %}" class="btn-glass btn-glass-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </div>
+            </div>
+
+            <!-- Body Information -->
+            <div class="glass-body">
+                <div class="info-grid">
+                    <div class="info-box">
+                        <div class="info-label">School</div>
+                        <div class="info-value">{{ object.school.name }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">Type</div>
+                        <div class="info-value">{{ object.get_type_display|default:object.type }}</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">Capacity</div>
+                        <div class="info-value">{{ object.capacity }} students</div>
+                    </div>
+
+                    <div class="info-box">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">
+                            {% if object.is_active %}
+                                <span class="badge-current">● Active</span>
+                            {% else %}
+                                <span class="badge-inactive">○ Inactive</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Back Navigation -->
+                <div class="pt-2">
+                    <a href="{% url 'room_list' %}" class="btn-glass">
+                        <i class="bi bi-arrow-left"></i> Back to Rooms
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 </div>
-
-<p><strong>School:</strong> {{ object.school.name }}</p>
-<p><strong>Type:</strong> {{ object.type }}</p>
-<p><strong>Capacity:</strong> {{ object.capacity }}</p>
-<p><strong>Status:</strong> {% if object.is_active %}Active{% else %}Inactive{% endif %}</p>
-
-<a href="{% url 'room_list' %}" class="btn btn-outline-primary mt-3">Back to Rooms</a>
 {% endblock %}

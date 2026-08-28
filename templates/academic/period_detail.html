@@ -1,29 +1,319 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
-{% block title %}Period {{ object.period_number }}{% endblock %}
+{% block title %}Period #{{ object.period_number }} Details - Timetable Pro{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center border-bottom pb-2">
-    <h1>{{ object.wing }} – Period {{ object.period_number }}</h1>
-    <div>
-        <a href="{% url 'period_update' object.pk %}" class="btn btn-secondary">Edit</a>
-        <a href="{% url 'period_delete' object.pk %}" class="btn btn-danger">Delete</a>
+<style>
+    .detail-wrapper {
+        min-height: 100vh;
+        background: radial-gradient(circle at top right, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+        background-attachment: fixed;
+        padding-bottom: 4rem;
+    }
+    
+    .glass-card {
+        background: rgba(30, 41, 59, 0.6);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 24px;
+        box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+        color: #f8fafc;
+        animation: slideUp 0.5s ease-out;
+    }
+
+    .glass-header {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(14, 165, 233, 0.15) 100%);
+        padding: 32px 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .period-title {
+        font-size: 2rem;
+        font-weight: 800;
+        margin: 0;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .wing-pill {
+        background: rgba(14, 165, 233, 0.2);
+        color: #38bdf8;
+        padding: 6px 16px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+    }
+
+    .glass-body {
+        padding: 40px;
+    }
+
+    /* Grid Layouts */
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .info-box {
+        background: rgba(15, 23, 42, 0.5);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: 20px;
+        transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .info-box:hover {
+        transform: translateY(-3px);
+        border-color: rgba(56, 189, 248, 0.4);
+        background: rgba(30, 41, 59, 0.7);
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+    }
+
+    .info-value {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #f8fafc;
+    }
+
+    .time-highlight {
+        font-size: 1.6rem;
+        color: #38bdf8; /* Vibrant Cyan */
+    }
+
+    /* Days & Flags */
+    .days-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 6px;
+    }
+
+    .day-pill {
+        padding: 6px 14px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        background: rgba(99, 102, 241, 0.2);
+        color: #a5b4fc;
+        border: 1px solid rgba(165, 180, 252, 0.3);
+    }
+
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        background: rgba(16, 185, 129, 0.15);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+    }
+
+    /* Action Bar */
+    .glass-footer {
+        padding: 24px 40px;
+        background: rgba(15, 23, 42, 0.7);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-glass-edit {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.25s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-glass-edit:hover {
+        background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-glass-delete {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+
+    .btn-glass-delete:hover {
+        background: rgba(239, 68, 68, 0.8);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .btn-glass-back {
+        background: rgba(255, 255, 255, 0.05);
+        color: #cbd5e1;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.25s ease;
+    }
+
+    .btn-glass-back:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+        .glass-header, .glass-body, .glass-footer { padding: 24px; }
+        .period-title { font-size: 1.5rem; }
+    }
+</style>
+
+<div class="detail-wrapper py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="glass-card">
+                    
+                    <!-- Glass Header -->
+                    <div class="glass-header">
+                        <div class="period-title">
+                            <span>⏱️ Period {{ object.period_number }}</span>
+                            <span class="wing-pill">{{ object.get_wing_display|default:object.wing }}</span>
+                        </div>
+                        <div>
+                            {% if object.is_assembly %}
+                                <span class="type-badge">🔔 Assembly</span>
+                            {% elif object.is_lunch %}
+                                <span class="type-badge">🍱 Lunch Break</span>
+                            {% elif object.is_break %}
+                                <span class="type-badge">☕ Short Break</span>
+                            {% else %}
+                                <span class="type-badge">📚 Regular Class</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Glass Body -->
+                    <div class="glass-body">
+                        <!-- Key Time Info -->
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <div class="info-label">Start Time</div>
+                                <div class="info-value time-highlight">{{ object.start_time|time:"H:i" }}</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-label">End Time</div>
+                                <div class="info-value time-highlight">{{ object.end_time|time:"H:i" }}</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-label">Duration</div>
+                                <div class="info-value">{{ object.duration_minutes|default:"—" }} mins</div>
+                            </div>
+                            <div class="info-box">
+                                <div class="info-label">School</div>
+                                <div class="info-value">{{ object.school.name|default:"Primary School" }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Days Row -->
+                        <div class="info-box mb-4">
+                            <div class="info-label">Active Days</div>
+                            <div class="days-row">
+                                {% if object.days %}
+                                    {% for day in object.days %}
+                                        <span class="day-pill">
+                                            {% if day == 0 or day == '0' %}Mon
+                                            {% elif day == 1 or day == '1' %}Tue
+                                            {% elif day == 2 or day == '2' %}Wed
+                                            {% elif day == 3 or day == '3' %}Thu
+                                            {% elif day == 4 or day == '4' %}Fri
+                                            {% elif day == 5 or day == '5' %}Sat
+                                            {% elif day == 6 or day == '6' %}Sun
+                                            {% endif %}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="day-pill">All Days (Mon - Sun)</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Optional Activity / Break Info -->
+                        {% if object.special_activity or object.break_duration %}
+                        <div class="info-grid">
+                            {% if object.special_activity %}
+                            <div class="info-box">
+                                <div class="info-label">Special Activity</div>
+                                <div class="info-value fs-6">{{ object.special_activity }}</div>
+                            </div>
+                            {% endif %}
+                            {% if object.break_duration %}
+                            <div class="info-box">
+                                <div class="info-label">Break Duration</div>
+                                <div class="info-value">{{ object.break_duration }} mins</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Glass Footer Actions -->
+                    <div class="glass-footer">
+                        <a href="{% url 'period_update' object.pk %}" class="btn-glass-edit">
+                            ✏️ Edit Period
+                        </a>
+                        <a href="{% url 'period_delete' object.pk %}" class="btn-glass-delete">
+                            🗑️ Delete
+                        </a>
+                        <a href="{% url 'period_list' %}" class="btn-glass-back ms-auto">
+                            ← Back to Periods
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-
-<p><strong>School:</strong> {{ object.school.name }}</p>
-<p><strong>Start:</strong> {{ object.start_time }}</p>
-<p><strong>End:</strong> {{ object.end_time }}</p>
-<p><strong>Duration:</strong> {{ object.duration_minutes }} min</p>
-<p><strong>Assembly:</strong> {% if object.is_assembly %}✅{% else %}❌{% endif %}</p>
-<p><strong>Lunch:</strong> {% if object.is_lunch %}✅{% else %}❌{% endif %}</p>
-<p><strong>Break:</strong> {% if object.is_break %}✅ ({{ object.break_duration }} min){% else %}❌{% endif %}</p>
-{% if object.day_of_week %}
-    <p><strong>Day:</strong> {{ object.get_day_of_week_display }}</p>
-{% endif %}
-{% if object.special_activity %}
-    <p><strong>Special Activity:</strong> {{ object.special_activity }}</p>
-{% endif %}
-
-<a href="{% url 'period_list' %}" class="btn btn-outline-primary mt-3">Back to Periods</a>
 {% endblock %}

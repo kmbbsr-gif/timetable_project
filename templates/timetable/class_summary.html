@@ -1,0 +1,194 @@
+<!-- {% extends 'base.html' %}
+{% load timetable_tags %}
+
+{% block title %}Class Schedule Summary{% endblock %}
+
+{% block content %}
+<h2>Class Schedule Summary</h2>
+
+<!-- Selector -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="{% url 'class_summary' %}" class="row g-3">
+            <div class="col-md-5">
+                <label for="class_id" class="form-label">Class</label>
+                <select name="class_id" id="class_id" class="form-select" required>
+                    <option value="">-- Select --</option>
+                    {% for cls in classes %}
+                        <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
+                            {{ cls.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="section_id" class="form-label">Section</label>
+                <select name="section_id" id="section_id" class="form-select" required>
+                    <option value="">-- Select --</option>
+                    {% if sections_for_class %}
+                        {% for section in sections_for_class %}
+                            <option value="{{ section.id }}" {% if selected_section and selected_section.id == section.id %}selected{% endif %}>
+                                {{ section.name }}
+                            </option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Load</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Rest of the page (stats, grid, etc.) – unchanged -->
+{% if selected_class and selected_section %}
+    <h4>{{ selected_class.name }} - {{ selected_section.name }}</h4>
+
+    <!-- Stats Cards (same as before) -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="card-title">Teaching Slots</h6>
+                    <p class="card-text display-6">{{ summary.total_teaching }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h6 class="card-title">Non-Teaching</h6>
+                    <p class="card-text display-6">{{ summary.non_teaching }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="card-title">Assigned (Planned)</h6>
+                    <p class="card-text display-6">{{ summary.total_assigned }}</p>
+                    <small>From TeacherSubjectAssignment</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6 class="card-title">Scheduled (Actual)</h6>
+                    <p class="card-text display-6">{{ summary.scheduled_count }}</p>
+                    <small>From TimetableEntry</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- More cards -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h6 class="card-title">Free Slots (Unfilled)</h6>
+                    <p class="card-text display-6">{{ summary.free_slots }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h6 class="card-title">Mismatch (Assigned – Scheduled)</h6>
+                    <p class="card-text display-6">{{ summary.mismatch }}</p>
+                    <small>Positive = over‑assigned; Negative = under‑assigned</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject-wise breakdown -->
+    <div class="card mb-4">
+        <div class="card-header">Subject-wise Period Allocation</div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Assigned</th>
+                        <th>Scheduled</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for subject, count in summary.assigned_per_subject.items %}
+                        <tr>
+                            <td>{{ subject }}</td>
+                            <td>{{ count }}</td>
+                            <td>{{ summary.scheduled_per_subject|get_item:subject|default:0 }}</td>
+                            <td>
+                                {% with scheduled=summary.scheduled_per_subject|get_item:subject|default:0 %}
+                                    {% if scheduled < count %}
+                                        <span class="text-warning">⚠️ Under‑scheduled</span>
+                                    {% elif scheduled > count %}
+                                        <span class="text-danger">⚠️ Over‑scheduled</span>
+                                    {% else %}
+                                        <span class="text-success">✅ OK</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" class="text-center">No assignments yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Detailed Grid (same as before) -->
+    <h5>Detailed Grid</h5>
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Period</th>
+                {% for day_idx, day_name in days_with_indices %}
+                    <th>{{ day_name|slice:":3" }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for period in periods %}
+            <tr>
+                <td>
+                    <strong>P{{ period.period_number }}</strong>
+                    {% if period.is_assembly %} (A){% elif period.is_lunch %}(L){% elif period.is_break %}(B){% endif %}
+                </td>
+                {% for day_idx, day_name in days_with_indices %}
+                    <td>
+                        {% with key=day_idx|make_key:period.period_number %}
+                            {% with entry=grid|get_item:key %}
+                                {% if entry %}
+                                    {{ entry.subject.name }}
+                                    {% if entry.is_fixed %}⭐{% endif %}
+                                {% else %}
+                                    {% if period.is_assembly or period.is_lunch or period.is_break %}
+                                        <span class="text-muted">—</span>
+                                    {% else %}
+                                        <span class="text-danger">FREE</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% endwith %}
+                        {% endwith %}
+                    </td>
+                {% endfor %}
+            </tr>
+            {% empty %}
+            <tr><td colspan="7">No periods defined for this wing.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% else %}
+    <div class="alert alert-info">Select a class and section to view the summary.</div>
+{% endif %}
+
+<a href="{% url 'timetable_index' %}" class="btn btn-secondary mt-3">Back</a>
+{% endblock %} -->

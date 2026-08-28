@@ -1,67 +1,399 @@
 {% extends 'base.html' %}
 
-{% block title %}Bulk Create Periods{% endblock %}
+{% block title %}Bulk Create Periods - Keshab Sir's School Studio{% endblock %}
 
 {% block content %}
-<h2>Bulk Create Periods</h2>
-<form method="post" id="bulk-form">
-    {% csrf_token %}
-    <div class="row mb-3">
-        <div class="col">
-            <label for="school" class="form-label">School</label>
-            <select name="school" id="school" class="form-select" required>
-                <option value="">-- Select --</option>
-                {% for school in schools %}
-                <option value="{{ school.id }}">{{ school.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col">
-            <label for="wing" class="form-label">Wing</label>
-            <select name="wing" id="wing" class="form-select" required>
-                <option value="">-- Select --</option>
-                <option value="Junior">Junior</option>
-                <option value="Middle">Middle</option>
-                <option value="Senior">Senior</option>
-            </select>
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col">
-            <label for="total_periods" class="form-label">Number of periods per day</label>
-            <input type="number" name="total_periods" id="total_periods" class="form-control" min="1" max="15" required>
-        </div>
-        <div class="col">
-            <label for="start_time" class="form-label">Start time</label>
-            <input type="time" name="start_time" id="start_time" class="form-control" required>
-        </div>
-        <div class="col">
-            <label for="default_duration" class="form-label">Default duration (minutes)</label>
-            <input type="number" name="default_duration" id="default_duration" class="form-control" min="1" value="35" required>
-        </div>
-    </div>
+<style>
+    /* ─── Animated Gradient Background ─── */
+    .glass-page-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
+    }
 
-    <div class="mb-3">
-        <button type="button" class="btn btn-secondary" id="generate-table">Generate Period Table</button>
-    </div>
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
+    }
 
-    <div id="period-table-container"></div>
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+        animation-delay: 0s;
+    }
 
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary" id="submit-btn" style="display:none;">Create Periods</button>
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        position: relative;
+        z-index: 2;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .glass-header {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .glass-title {
+        color: #ffffff;
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-title i {
+        color: #00d4ff;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
+    }
+
+    .glass-body {
+        padding: 2rem;
+    }
+
+    /* ─── Form Inputs & Styling ─── */
+    .form-label, label {
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .glass-body input[type="text"],
+    .glass-body input[type="number"],
+    .glass-body input[type="time"],
+    .glass-body select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: #ffffff;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+
+    .glass-body input:focus,
+    .glass-body select:focus {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #00d4ff;
+        box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+    }
+
+    .glass-body option {
+        background: #1e1b4b;
+        color: #ffffff;
+    }
+
+    /* ─── Glass Buttons ─── */
+    .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff !important;
+        padding: 0.65rem 1.35rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        position: relative;
+        z-index: 5;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
+    }
+
+    .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        border-color: rgba(0, 212, 255, 0.6);
+        color: #ffffff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.35);
+    }
+
+    .btn-glass-success {
+        background: rgba(16, 185, 129, 0.2);
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        color: #34d399 !important;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-glass-success:hover {
+        background: rgba(16, 185, 129, 0.4);
+        color: #ffffff !important;
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important;
+    }
+
+    /* ─── Glass Table ─── */
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        color: rgba(255, 255, 255, 0.9);
+        margin-top: 1rem;
+    }
+
+    .glass-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .glass-table tbody tr {
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.25s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-table td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-table td:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        color: #ffffff;
+        font-weight: 700;
+        text-align: center;
+        width: 80px;
+    }
+
+    .glass-table td:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .period-badge {
+        background: rgba(0, 212, 255, 0.15);
+        color: #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+        font-weight: 700;
+    }
+
+    .school-display-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        color: #ffffff;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .glass-alert {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="glass-page-wrapper">
+    <div class="container-fluid max-width-lg" style="position: relative; z-index: 3;">
+
+        <!-- Top Navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{% url 'period_list' %}" class="btn-glass btn-glass-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Periods
+            </a>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show glass-alert" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Main Form Glass Card -->
+        <div class="glass-card">
+            <div class="glass-header">
+                <h1 class="glass-title">
+                    <i class="bi bi-layers-half"></i> Bulk Create Periods
+                </h1>
+            </div>
+
+            <div class="glass-body">
+                <form method="post" id="bulk-form">
+                    {% csrf_token %}
+                    
+                    <!-- Row 1: School and Wing -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">School / Institution</label>
+                            {% if user.is_superuser %}
+                                <select name="school" id="school" class="form-select" required>
+                                    <option value="">-- Select School --</option>
+                                    {% for sch in schools %}
+                                        <option value="{{ sch.id }}" {% if current_school and current_school.id == sch.id %}selected{% endif %}>
+                                            {{ sch.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <div class="school-display-card">
+                                    <i class="bi bi-building text-info"></i>
+                                    <span>{{ current_school.name|default:"Your Linked School" }}</span>
+                                </div>
+                                {% if current_school %}
+                                    <input type="hidden" name="school" value="{{ current_school.id }}">
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="wing" class="form-label">Wing</label>
+                            <select name="wing" id="wing" class="form-select" required>
+                                <option value="">-- Select Wing --</option>
+                                <option value="Junior">Junior</option>
+                                <option value="Middle">Middle</option>
+                                <option value="Senior">Senior</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Periods, Start Time, Default Duration -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <label for="total_periods" class="form-label">Number of periods per day</label>
+                            <input type="number" name="total_periods" id="total_periods" class="form-control" min="1" max="15" value="8" placeholder="e.g. 8" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="start_time" class="form-label">Start time</label>
+                            <input type="time" name="start_time" id="start_time" class="form-control" value="08:00" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="default_duration" class="form-label">Default duration (minutes)</label>
+                            <input type="number" name="default_duration" id="default_duration" class="form-control" min="1" value="35" required>
+                        </div>
+                    </div>
+
+                    <!-- Generate Button -->
+                    <div class="mb-4 text-start">
+                        <button type="button" class="btn-glass" id="generate-table">
+                            <i class="bi bi-table"></i> Generate Period Table
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Table Container -->
+                    <div id="period-table-container"></div>
+
+                    <!-- Form Submit Action -->
+                    <div class="mt-4 text-end">
+                        <button type="submit" class="btn-glass btn-glass-success" id="submit-btn" style="display:none;">
+                            <i class="bi bi-check-circle-fill"></i> Create Periods
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </div>
-</form>
+</div>
 
 <script>
 document.getElementById('generate-table').addEventListener('click', function() {
     const total = parseInt(document.getElementById('total_periods').value);
     const defaultDur = parseInt(document.getElementById('default_duration').value);
     const container = document.getElementById('period-table-container');
-    let html = '<h4>Period Details</h4><table class="table table-bordered"><thead><tr><th>Period #</th><th>Type</th><th>Duration (min)</th><th>Special Activity</th><th>Specific Day (optional)</th></tr></thead><tbody>';
+
+    if (isNaN(total) || total < 1) {
+        alert("Please enter a valid number of periods per day.");
+        return;
+    }
+
+    let html = '<h4 class="text-white mt-4 mb-3 fw-bold"><i class="bi bi-list-stars text-info"></i> Period Details Configurator</h4>';
+    html += '<div class="table-responsive"><table class="glass-table"><thead><tr><th>#</th><th>Type</th><th>Duration (min)</th><th>Special Activity</th><th>Specific Day (optional)</th></tr></thead><tbody>';
+    
     for (let i = 1; i <= total; i++) {
         html += `
             <tr>
-                <td>${i}</td>
+                <td><span class="period-badge">P${i}</span></td>
                 <td>
                     <select name="period_type_${i}" class="form-select period-type">
                         <option value="Normal">Normal</option>
@@ -71,7 +403,7 @@ document.getElementById('generate-table').addEventListener('click', function() {
                     </select>
                 </td>
                 <td>
-                    <input type="number" name="period_duration_${i}" class="form-control period-duration" value="${defaultDur}" min="1">
+                    <input type="number" name="period_duration_${i}" class="form-control period-duration" value="${defaultDur || 35}" min="1">
                 </td>
                 <td>
                     <input type="text" name="period_activity_${i}" class="form-control period-activity" placeholder="e.g., MPT, Yoga">
@@ -90,34 +422,44 @@ document.getElementById('generate-table').addEventListener('click', function() {
             </tr>
         `;
     }
-    html += '</tbody></table>';
+    html += '</tbody></table></div>';
     container.innerHTML = html;
-    document.getElementById('submit-btn').style.display = 'inline-block';
+    document.getElementById('submit-btn').style.display = 'inline-flex';
 });
 
 document.getElementById('bulk-form').addEventListener('submit', function(e) {
-    // Gather period data
-    const total = parseInt(document.getElementById('total_periods').value);
+    const totalInput = document.getElementById('total_periods');
+    if (!totalInput || !totalInput.value) return;
+
+    const total = parseInt(totalInput.value);
     const periodData = [];
+    
     for (let i = 1; i <= total; i++) {
-        const type = document.querySelector(`select[name="period_type_${i}"]`).value;
-        const duration = parseInt(document.querySelector(`input[name="period_duration_${i}"]`).value);
-        const activity = document.querySelector(`input[name="period_activity_${i}"]`).value;
-        const day = document.querySelector(`select[name="period_day_${i}"]`).value;
-        periodData.push({
-            period_number: i,
-            type: type,
-            duration: duration,
-            special_activity: activity,
-            day_of_week: day ? parseInt(day) : null,
-        });
+        const typeElem = document.querySelector(`select[name="period_type_${i}"]`);
+        const durationElem = document.querySelector(`input[name="period_duration_${i}"]`);
+        const activityElem = document.querySelector(`input[name="period_activity_${i}"]`);
+        const dayElem = document.querySelector(`select[name="period_day_${i}"]`);
+
+        if (typeElem && durationElem) {
+            periodData.push({
+                period_number: i,
+                type: typeElem.value,
+                duration: parseInt(durationElem.value) || 35,
+                special_activity: activityElem ? activityElem.value : '',
+                day_of_week: dayElem && dayElem.value !== '' ? parseInt(dayElem.value) : null,
+            });
+        }
     }
-    // Add hidden field with JSON
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'period_data';
-    input.value = JSON.stringify(periodData);
-    this.appendChild(input);
+    
+    // Inject hidden field with structured JSON
+    let hiddenInput = document.querySelector('input[name="period_data"]');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'period_data';
+        this.appendChild(hiddenInput);
+    }
+    hiddenInput.value = JSON.stringify(periodData);
 });
 </script>
 {% endblock %}
