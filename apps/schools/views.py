@@ -212,8 +212,8 @@ def register_school(request):
                 role='SCHOOL_ADMIN'
             )
 
-            # Initialize Periods
-            create_default_school_periods(school)
+            # Initialize Periods (disabled — admins create periods manually)
+            # create_default_school_periods(school)
 
             messages.success(request, f"🎉 {school.name} registered successfully! Log in to access your workspace.")
             return redirect('login')
