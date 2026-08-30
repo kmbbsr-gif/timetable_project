@@ -83,9 +83,8 @@ def school_list(request):
         messages.error(request, "No school associated with this account.")
         return redirect('dashboard')
         
-    # Return ONLY the logged-in user's school
-    schools = School.objects.filter(id=school.id)
-    return render(request, 'schools/school_list.html', {'schools': schools})
+        # Redirect school admin directly to their school detail page
+    return redirect('school_detail', pk=school.id)
 
 
 @login_required

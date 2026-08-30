@@ -159,7 +159,7 @@
                                     {% if user.is_superuser %}
                                         <li><a class="dropdown-item" href="{% url 'school_list' %}"><i class="bi bi-buildings"></i> All Schools (Master)</a></li>
                                     {% elif request.school %}
-                                        <li><a class="dropdown-item" href="{% url 'school_update' request.school.id %}"><i class="bi bi-building"></i> School Profile</a></li>
+                                        <li><a class="dropdown-item" href="{% url 'school_detail' request.school.id %}"><i class="bi bi-building"></i> My School</a></li>
                                     {% endif %}
                                     <li><a class="dropdown-item" href="{% url 'session_list' %}"><i class="bi bi-calendar-range"></i> Sessions</a></li>
                                     <li><a class="dropdown-item" href="{% url 'class_list' %}"><i class="bi bi-book"></i> Classes</a></li>
