@@ -847,20 +847,53 @@ class ClassSubjectDeleteView(SuccessMessageMixin, DeleteView):
 #  PERIOD DEFINITION VIEWS
 # ============================================================
 
+# apps/academic/views.py
+from apps.utils.tenancy import get_user_school  # Or your tenancy helper
+from apps.academic.models import PeriodDefinition
+
 class PeriodListView(LoginRequiredMixin, ListView):
     model = PeriodDefinition
     template_name = "academic/period_list.html"
     context_object_name = "periods"
 
-    def get_queryset(self):
+    def get_school(self):
+        # 1. Try middleware tenant
         school = getattr(self.request, "school", None)
-        if self.request.user.is_superuser:
-            if school:
-                return PeriodDefinition.objects.filter(school=school).order_by("wing", "period_number")
-            return PeriodDefinition.objects.all().order_by("school", "wing", "period_number")
+        # 2. Try user direct link
+        if not school and hasattr(self.request.user, "school"):
+            school = self.request.user.school
+        # 3. Try user profile link
+        if not school:
+            profile = getattr(self.request.user, "profile", None) or getattr(self.request.user, "userprofile", None)
+            if profile and hasattr(profile, "school"):
+                school = profile.school
+        return school
+
+    def get_queryset(self):
+        school = self.get_school()
+        
+        # Superuser with an active school context selected
+        if self.request.user.is_superuser and not school:
+            # If no school is selected, superusers see nothing or specify a school rather than all
+            return PeriodDefinition.objects.none()
+
         if school:
             return PeriodDefinition.objects.filter(school=school).order_by("wing", "period_number")
+            
         return PeriodDefinition.objects.none()
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        school = self.get_school()
+        
+        if school:
+            # Get distinct wings that actually have periods for this school
+            wings = PeriodDefinition.objects.filter(school=school).values_list('wing', flat=True).distinct()
+            context["wings"] = wings
+        else:
+            context["wings"] = []
+            
+        return context
 
 
 class PeriodDetailView(LoginRequiredMixin, DetailView):
