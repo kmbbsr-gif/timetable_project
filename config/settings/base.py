@@ -81,6 +81,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.schools.context_processors.active_tenant_context',
+                'apps.academic.context_processors.wizard_setup_status',
             ],
         },
     },

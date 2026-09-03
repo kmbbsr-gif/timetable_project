@@ -3,8 +3,13 @@
 {% block title %}{{ school.name }} - Details{% endblock %}
 
 {% block content %}
+<div class="container-fluid px-4">
+    <!-- Progress Stepper (Step 1 is School) -->
+    {% include 'components/wizard_stepper.html' with current_step=1 %}
+</div>
+
 <div class="detail-page-wrapper">
-    <div class="container py-5">
+    <div class="container py-4">
         
         <!-- Header -->
         <div class="detail-header mb-4">
@@ -21,7 +26,8 @@
                         <p class="detail-subtitle mb-0">{{ school.board }} • {{ school.city }}</p>
                     </div>
                 </div>
-                                <div class="detail-actions">
+
+                <div class="detail-actions">
                     {% if user.is_superuser or user.profile.school == school %}
                         <a href="{% url 'school_update' school.pk %}" class="btn btn-edit">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
@@ -40,6 +46,16 @@
                             Delete
                         </a>
                     {% endif %}
+
+                    <!-- ========================================================= -->
+                    <!-- PLACED HERE: TOP ACTION BAR "NEXT: ACADEMIC SESSIONS" -->
+                    <!-- ========================================================= -->
+                    <a href="{% url 'session_list' %}" class="btn btn-next">
+                        <span>Next: Academic Sessions</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="ms-2">
+                            <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
+                        </svg>
+                    </a>
                 </div>
             </div>
         </div>
@@ -202,17 +218,33 @@
             </div>
         </div>
 
-                <!-- Back Button -->
-        {% if user.is_superuser %}
-        <div class="mt-4">
-            <a href="{% url 'school_list' %}" class="btn btn-back">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
-                    <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+        <!-- ========================================================= -->
+        <!-- BOTTOM NAVIGATION BAR (VISIBLE TO ALL USERS) -->
+        <!-- ========================================================= -->
+        <div class="d-flex justify-content-between align-items-center mt-5 flex-wrap gap-3">
+            {% if user.is_superuser %}
+                <a href="{% url 'school_list' %}" class="btn btn-back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    Back to Schools
+                </a>
+            {% else %}
+                <a href="{% url 'dashboard' %}" class="btn btn-back">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="me-2">
+                        <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/>
+                    </svg>
+                    Back to Dashboard
+                </a>
+            {% endif %}
+
+            <a href="{% url 'session_list' %}" class="btn btn-next px-4 py-2">
+                <span>Proceed to Sessions</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" class="ms-2">
+                    <path fill-rule="evenodd" d="M1 8a7 7 0 1 0 14 0A7 7 0 0 0 1 8zm15 0A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z"/>
                 </svg>
-                Back to Schools
             </a>
         </div>
-        {% endif %}
 
     </div>
 </div>
@@ -225,6 +257,7 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         background-attachment: fixed;
         padding-bottom: 3rem;
+        border-radius: 20px;
     }
 
     /* Header */
@@ -265,7 +298,9 @@
 
     .detail-actions {
         display: flex;
+        align-items: center;
         gap: 0.75rem;
+        flex-wrap: wrap;
     }
 
     .btn-edit {
@@ -308,6 +343,28 @@
         color: white;
         border-color: #dc2626;
         transform: translateY(-2px);
+    }
+
+    /* Next Button (Header & Bottom) */
+    .btn-next {
+        padding: 0.6rem 1.25rem;
+        border-radius: 10px;
+        border: 2px solid #00d4ff;
+        background: rgba(0, 212, 255, 0.2);
+        color: #ffffff !important;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.25);
+    }
+
+    .btn-next:hover {
+        background: #00d4ff;
+        color: #0f172a !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 212, 255, 0.45);
     }
 
     /* Cards */
@@ -392,18 +449,15 @@
         color: #1e293b;
     }
 
-    /* Section Headings */
     .section-heading {
         font-size: 1rem;
         font-weight: 700;
-        color: #1e293b;
         margin-bottom: 1.25rem;
         display: flex;
         align-items: center;
         color: #667eea;
     }
 
-    /* Address */
     .address-text {
         font-size: 0.95rem;
         color: #374151;
@@ -411,7 +465,6 @@
         line-height: 1.5;
     }
 
-    /* Administration */
     .admin-list {
         display: flex;
         flex-direction: column;
@@ -439,7 +492,6 @@
         color: #1e293b;
     }
 
-    /* Timings */
     .timing-row {
         display: flex;
         justify-content: space-between;
@@ -464,7 +516,6 @@
         color: #1e293b;
     }
 
-    /* Contact */
     .contact-item {
         display: flex;
         align-items: center;
@@ -491,7 +542,7 @@
 
     /* Back Button */
     .btn-back {
-        padding: 0.75rem 1.5rem;
+        padding: 0.65rem 1.4rem;
         border-radius: 12px;
         border: 2px solid rgba(255, 255, 255, 0.3);
         background: rgba(255, 255, 255, 0.15);
@@ -511,19 +562,6 @@
         transform: translateY(-2px);
     }
 
-    /* Animations */
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(30px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .detail-card {
-        animation: slideUp 0.5s ease-out backwards;
-    }
-
-    .detail-card:nth-child(1) { animation-delay: 0.05s; }
-    .detail-card:nth-child(2) { animation-delay: 0.1s; }
-
     @media (max-width: 768px) {
         .detail-header {
             padding: 1.25rem;
@@ -535,7 +573,7 @@
             width: 100%;
             justify-content: stretch;
         }
-        .btn-edit, .btn-delete {
+        .btn-edit, .btn-delete, .btn-next {
             flex: 1;
             justify-content: center;
         }

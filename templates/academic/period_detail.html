@@ -208,7 +208,15 @@
         .period-title { font-size: 1.5rem; }
     }
 </style>
+<div class="container-fluid px-4">
+    <!-- Progress Stepper (Step 6 is Period) -->
+    {% include 'components/wizard_stepper.html' with current_step=6 %}
 
+    <div class="page-header">
+        <h1>⏰ Period Configuration</h1>
+    </div>
+    ...
+</div>
 <div class="detail-wrapper py-5">
     <div class="container">
         <div class="row justify-content-center">

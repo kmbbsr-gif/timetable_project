@@ -247,8 +247,65 @@
         .action-bar { flex-direction: column; align-items: stretch; }
         .form-row-2, .form-row-3 { grid-template-columns: 1fr; gap: 0; }
     }
-</style>
+    /* Wing checkboxes layout */
+    .wing-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .wing-pill {
+        position: relative;
+    }
+    .wing-pill input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .wing-pill label {
+        display: inline-block;
+        padding: 14px 24px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        color: #475569;
+        margin-bottom: 0;
+        user-select: none;
+    }
+    .wing-pill input[type="checkbox"]:checked + label {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        transform: translateY(-2px);
+    }
 
+    /* Flag items immediate highlight */
+    .flag-item:has(input[type="checkbox"]:checked) {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        color: white;
+        border-color: #4f46e5;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+        transform: translateY(-2px);
+    }
+    .flag-item:has(input[type="checkbox"]:checked) label {
+        color: white;
+    }
+</style>
+<div class="container-fluid px-4">
+    <!-- Progress Stepper (Step 6 is Period) -->
+    {% include 'components/wizard_stepper.html' with current_step=6 %}
+
+    <div class="page-header">
+        <h1>⏰ Period Configuration</h1>
+    </div>
+    ...
+</div>
 <div class="container-fluid px-4">
     <div class="page-header">
         <h1>🕐 {{ view.title|default:"Period" }}</h1>
@@ -457,6 +514,10 @@
                 <div class="action-bar">
                     <button type="submit" class="btn btn-save">
                         <span>💾</span> Save Period
+                    </button>
+                    <button type="submit" name="save_and_next" value="true" class="btn btn-success" 
+                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 12px 24px; font-weight: 600; border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+                        Save & Next Step ➔
                     </button>
                     <a href="{% url 'period_list' %}" class="btn btn-cancel">
                         <span>←</span> Cancel

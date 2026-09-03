@@ -106,9 +106,14 @@ def school_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'School created successfully!')
+            
+            # If user clicked 'Save & Next Step', advance to session creation
+            if request.POST.get('save_and_next') == 'true':
+                return redirect('session_create')
             return redirect('school_list')
     else:
         form = SchoolForm()
+
     return render(request, 'schools/school_form.html', {'form': form, 'title': 'Add School'})
 
 
@@ -126,6 +131,10 @@ def school_update(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, "School details updated successfully.")
+
+            # If user clicked 'Save & Next Step', advance to session creation
+            if request.POST.get('save_and_next') == 'true':
+                return redirect('session_create')
             return redirect('dashboard')
     else:
         form = SchoolForm(instance=school)

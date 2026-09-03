@@ -1,0 +1,207 @@
+<!-- templates/components/wizard_stepper.html -->
+<style>
+  .wizard-wrapper {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 14px 18px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Custom smooth scrollbar for mobile */
+  .wizard-wrapper::-webkit-scrollbar {
+    height: 5px;
+  }
+  .wizard-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+
+  .wizard-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 880px;
+    margin: 0;
+    padding: 6px 0;
+    list-style: none;
+  }
+
+  .wizard-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    text-decoration: none !important;
+  }
+
+  /* Connector bar */
+  .wizard-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    width: 100%;
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 1;
+    transition: background 0.3s ease;
+  }
+
+  .wizard-step.is-done:not(:last-child)::after {
+    background: #10b981;
+  }
+
+  /* Icon node */
+  .wizard-node {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    position: relative;
+    z-index: 2;
+    background: #f8fafc;
+    border: 2px solid #cbd5e1;
+    color: #64748b;
+    transition: all 0.25s ease;
+  }
+
+  .wizard-label {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+  }
+
+  /* 1. COMPLETED: Has data in DB */
+  .wizard-step.is-done .wizard-node {
+    background: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  }
+  .wizard-step.is-done .wizard-label {
+    color: #059669;
+  }
+
+  /* 2. ACTIVE: Current Page */
+  .wizard-step.is-active .wizard-node {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+    border-color: #4f46e5 !important;
+    color: #ffffff !important;
+    transform: scale(1.15);
+    animation: activePulse 1.8s infinite;
+  }
+  .wizard-step.is-active .wizard-label {
+    color: #4f46e5;
+    font-weight: 800;
+  }
+
+  /* 3. PENDING / UNFILLED (Grayed out) */
+  .wizard-step.is-pending .wizard-node {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+    opacity: 0.75;
+  }
+  .wizard-step.is-pending .wizard-label {
+    color: #94a3b8;
+  }
+
+  @keyframes activePulse {
+    0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.45); }
+    70% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+  }
+
+  @media (max-width: 768px) {
+    .wizard-stepper {
+      min-width: 780px;
+    }
+  }
+</style>
+
+<div class="wizard-wrapper">
+  <ul class="wizard-stepper">
+    <!-- 1. School -->
+    <li class="wizard-step {% if current_step == 1 %}is-active{% elif wizard_status.1 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.1 and current_step != 1 %}✓{% else %}🏫{% endif %}</div>
+      <span class="wizard-label">School</span>
+    </li>
+
+    <!-- 2. Session -->
+    <li class="wizard-step {% if current_step == 2 %}is-active{% elif wizard_status.2 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.2 and current_step != 2 %}✓{% else %}📅{% endif %}</div>
+      <span class="wizard-label">Session</span>
+    </li>
+
+    <!-- 3. Class -->
+    <li class="wizard-step {% if current_step == 3 %}is-active{% elif wizard_status.3 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.3 and current_step != 3 %}✓{% else %}🏫{% endif %}</div>
+      <span class="wizard-label">Class</span>
+    </li>
+
+    <!-- 4. Section -->
+    <li class="wizard-step {% if current_step == 4 %}is-active{% elif wizard_status.4 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.4 and current_step != 4 %}✓{% else %}🪑{% endif %}</div>
+      <span class="wizard-label">Section</span>
+    </li>
+
+    <!-- 5. Room -->
+    <li class="wizard-step {% if current_step == 5 %}is-active{% elif wizard_status.5 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.5 and current_step != 5 %}✓{% else %}🚪{% endif %}</div>
+      <span class="wizard-label">Room</span>
+    </li>
+
+    <!-- 6. Period -->
+    <li class="wizard-step {% if current_step == 6 %}is-active{% elif wizard_status.6 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.6 and current_step != 6 %}✓{% else %}⏰{% endif %}</div>
+      <span class="wizard-label">Period</span>
+    </li>
+
+    <!-- 7. Subject -->
+    <li class="wizard-step {% if current_step == 7 %}is-active{% elif wizard_status.7 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.7 and current_step != 7 %}✓{% else %}📚{% endif %}</div>
+      <span class="wizard-label">Subject</span>
+    </li>
+
+    <!-- 8. Fixed -->
+    <li class="wizard-step {% if current_step == 8 %}is-active{% elif wizard_status.8 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.8 and current_step != 8 %}✓{% else %}📌{% endif %}</div>
+      <span class="wizard-label">Fixed</span>
+    </li>
+
+    <!-- 9. Bulk -->
+    <li class="wizard-step {% if current_step == 9 %}is-active{% elif wizard_status.9 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.9 and current_step != 9 %}✓{% else %}⚡{% endif %}</div>
+      <span class="wizard-label">Bulk</span>
+    </li>
+
+    <!-- 10. Teachers -->
+    <li class="wizard-step {% if current_step == 10 %}is-active{% elif wizard_status.10 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.10 and current_step != 10 %}✓{% else %}👨‍🏫{% endif %}</div>
+      <span class="wizard-label">Teachers</span>
+    </li>
+
+    <!-- 11. Class-Sub -->
+    <li class="wizard-step {% if current_step == 11 %}is-active{% elif wizard_status.11 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.11 and current_step != 11 %}✓{% else %}📋{% endif %}</div>
+      <span class="wizard-label">Class-Sub</span>
+    </li>
+
+    <!-- 12. Assign -->
+    <li class="wizard-step {% if current_step == 12 %}is-active{% elif wizard_status.12 %}is-done{% else %}is-pending{% endif %}">
+      <div class="wizard-node">{% if wizard_status.12 and current_step != 12 %}✓{% else %}✓{% endif %}</div>
+      <span class="wizard-label">Assign</span>
+    </li>
+  </ul>
+</div>

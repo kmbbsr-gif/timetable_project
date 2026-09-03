@@ -287,7 +287,14 @@
         gap: 0.4rem;
     }
 </style>
+<div class="container-fluid px-4">
+    {% include 'components/wizard_stepper.html' with current_step=8 %}
 
+    <div class="page-header">
+        <h1>📌 Fixed Period Exceptions</h1>
+    </div>
+    <!-- Your Fixed entries content goes here -->
+</div>
 <div class="glass-page-wrapper">
     <div class="container-fluid max-width-lg" style="position: relative; z-index: 3;">
 
@@ -301,6 +308,7 @@
                     <i class="bi bi-building"></i> School: <strong>{{ current_school.name }}</strong>
                 </span>
             {% endif %}
+            <a href="{% url 'bulk_period_create' %}" class="btn-glass">Next: Bulk Periods ➔</a>
         </div>
 
         <!-- Messages -->
@@ -382,6 +390,10 @@
                     <div class="mt-4 text-end">
                         <button type="submit" class="btn-glass">
                             <i class="bi bi-plus-circle"></i> Create Fixed Entries
+                        </button>
+                        <button type="submit" name="save_and_next" value="true" class="btn btn-success" 
+                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 12px 24px; font-weight: 600; border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+                            Save & Next Step ➔
                         </button>
                     </div>
                 </form>

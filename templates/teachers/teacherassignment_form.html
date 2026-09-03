@@ -369,7 +369,14 @@
         margin-bottom: 1.5rem;
     }
 </style>
+<div class="container-fluid px-4">
+    {% include 'components/wizard_stepper.html' with current_step=12 %}
 
+    <div class="page-header">
+        <h1>✓ Teacher Subject Assignment</h1>
+    </div>
+    <!-- Your Teacher allocation/assignment content goes here -->
+</div>
 <div class="glass-page-wrapper">
     <div class="container-fluid">
         
@@ -557,6 +564,10 @@
                     <div class="d-flex gap-3 pt-3">
                         <button type="submit" class="btn-glass">
                             <i class="bi bi-check-lg"></i> Save Assignment
+                        </button>
+                        <button type="submit" name="save_and_next" value="true" class="btn btn-success" 
+                                style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 12px 24px; font-weight: 600; border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+                            Save & Next Step ➔
                         </button>
                         <a href="{% url 'teacherassignment_list' %}" class="btn-glass btn-glass-secondary">
                             Cancel

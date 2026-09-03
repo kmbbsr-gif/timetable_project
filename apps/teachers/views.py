@@ -71,6 +71,7 @@ class TeacherCreateView(SuccessMessageMixin, CreateView):
     form_class = TeacherForm
     template_name = "teachers/teacher_form.html"
     success_url = reverse_lazy("teacher_list")
+    next_url_name = "classsubject_create"
     success_message = "Teacher created successfully!"
 
     def get_form_kwargs(self):
@@ -304,6 +305,7 @@ class TeacherAssignmentCreateView(SuccessMessageMixin, CreateView):
     form_class = TeacherSubjectAssignmentForm
     template_name = "teachers/teacherassignment_form.html"
     success_url = reverse_lazy("teacherassignment_list")
+    next_url_name = "timetable_dashboard"
     success_message = "Teacher assignment created successfully!"
 
     def get_form(self, form_class=None):

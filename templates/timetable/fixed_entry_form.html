@@ -3,6 +3,14 @@
 {% block title %}{{ view.title|default:"Edit Fixed Entry" }}{% endblock %}
 
 {% block content %}
+<div class="container-fluid px-4">
+    {% include 'components/wizard_stepper.html' with current_step=8 %}
+
+    <div class="page-header">
+        <h1>📌 Fixed Period Exceptions</h1>
+    </div>
+    <!-- Your Fixed entries content goes here -->
+</div>
 <div class="form-page-wrapper">
     <div class="container py-5">
         <div class="row justify-content-center">

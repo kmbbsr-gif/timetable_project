@@ -214,6 +214,13 @@ DAY_CHOICES = [
 
 
 class PeriodDefinitionForm(forms.ModelForm):
+    wings = forms.MultipleChoiceField(
+        choices=WING_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Select Wing(s)"
+    )
+    
     days = forms.MultipleChoiceField(
         choices=DAY_CHOICES,
         required=False,

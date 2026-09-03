@@ -160,6 +160,7 @@
         {% csrf_token %}
 
         {% if form.non_field_errors %}
+        
         <div class="alert alert-danger rounded-3 mb-4">
             <strong>Please fix the following errors:</strong>
             <ul class="mb-0 mt-2">
@@ -264,6 +265,10 @@
         <div class="action-bar mt-4 mb-5">
             <button type="submit" class="btn btn-save text-white">
                 <span>💾</span> Save School
+            </button>
+            <button type="submit" name="save_and_next" value="true" class="btn btn-success" 
+                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 12px 24px; font-weight: 600; border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+                Save & Next to Session ➔
             </button>
             <a href="{% url 'school_list' %}" class="btn btn-cancel">
                 <span>←</span> Cancel

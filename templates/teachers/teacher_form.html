@@ -415,6 +415,14 @@
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid px-4">
+    {% include 'components/wizard_stepper.html' with current_step=10 %}
+
+    <div class="page-header">
+        <h1>👨‍🏫 Teacher Management</h1>
+    </div>
+    <!-- Your Teachers table/form content goes here -->
+</div>
 <div class="form-page-wrapper">
     <div class="container py-5">
         <div class="row justify-content-center">
@@ -551,6 +559,10 @@
                                     <path d="M1.5 0h11.586a1.5 1.5 0 0 1 1.06.44l1.415 1.414A1.5 1.5 0 0 1 16 2.914V14.5a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 14.5v-13A1.5 1.5 0 0 1 1.5 0ZM1 1.5v13a.5.5 0 0 0 .5.5H2v-4.5A1.5 1.5 0 0 1 3.5 9h9a1.5 1.5 0 0 1 1.5 1.5V15h.5a.5.5 0 0 0 .5-.5V2.914a.5.5 0 0 0-.146-.353l-1.415-1.415A.5.5 0 0 0 13.086 1H13v4.5A1.5 1.5 0 0 1 11.5 7h-7A1.5 1.5 0 0 1 3 5.5V1H1.5a.5.5 0 0 0-.5.5Zm3 4a.5.5 0 0 0 .5.5h7a.5.5 0 0 0 .5-.5V1H4v4.5ZM3 15h10v-4.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5V15Z"/>
                                 </svg>
                                 {% if object %}Update Teacher{% else %}Add Teacher{% endif %}
+                            </button>
+                            <button type="submit" name="save_and_next" value="true" class="btn btn-success" 
+                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 12px 24px; font-weight: 600; border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+                                Save & Next Step ➔
                             </button>
                         </div>
                     </form>

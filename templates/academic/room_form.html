@@ -236,7 +236,14 @@
         .form-row-2 { grid-template-columns: 1fr; }
     }
 </style>
+<div class="container-fluid px-4">
+    {% include 'components/wizard_stepper.html' with current_step=5 %}
 
+    <div class="page-header">
+        <h1>🚪 Rooms & Labs</h1>
+    </div>
+    <!-- Your Room form/table content goes here -->
+</div>
 <div class="container-fluid px-4">
     <!-- Page Header -->
     <div class="page-header">
@@ -362,6 +369,10 @@
                 <div class="action-bar">
                     <button type="submit" class="btn btn-save">
                         <span>💾</span> Save Room
+                    </button>
+                    <button type="submit" name="save_and_next" value="true" class="btn btn-success" 
+                            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; padding: 12px 24px; font-weight: 600; border-radius: 12px; color: white; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+                        Save & Next Step ➔
                     </button>
                     <a href="{% url 'room_list' %}" class="btn btn-cancel">
                         <span>←</span> Cancel

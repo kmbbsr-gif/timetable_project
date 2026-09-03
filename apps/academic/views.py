@@ -31,6 +31,8 @@ from .forms import (
 from .models import Room
 from .forms import RoomForm
 from .forms import SubjectForm, ClassSubjectForm
+from .models import PeriodDefinition, WING_CHOICES
+from apps.core.mixins import SaveAndNextMixin
 
 # ---------- Teacher CRUD Views ----------
 
@@ -44,10 +46,21 @@ class TeacherListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        for teacher in context["teachers"]:
-            teacher.total_periods = TeacherSubjectAssignment.objects.filter(
-                teacher=teacher
-            ).aggregate(total=Sum("weekly_periods"))["total"] or 0
+        school = getattr(self.request, "school", None)
+
+        # 1. Provide wings without causing NameError
+        context["wings"] = [choice[0] for choice in WING_CHOICES]
+
+        # 2. Optimize teacher period calculation
+        if "teachers" in context:
+            for teacher in context["teachers"]:
+                teacher.total_periods = (
+                    TeacherSubjectAssignment.objects.filter(teacher=teacher).aggregate(
+                        total=Sum("weekly_periods")
+                    )["total"]
+                    or 0
+                )
+
         return context
 
 
@@ -355,6 +368,7 @@ class SessionCreateView(SuccessMessageMixin, CreateView):
     form_class = AcademicSessionForm
     template_name = "academic/session_form.html"
     success_url = reverse_lazy("session_list")
+    next_url_name = "class_create"
     success_message = "Academic session created successfully!"
 
     def get_form_kwargs(self):
@@ -452,6 +466,7 @@ class ClassCreateView(SuccessMessageMixin, CreateView):
     form_class = ClassForm
     template_name = "academic/class_form.html"
     success_url = reverse_lazy("class_list")
+    next_url_name = "section_create"
     success_message = "Class created successfully!"
 
     def get_form_kwargs(self):
@@ -548,6 +563,7 @@ class SectionCreateView(SuccessMessageMixin, CreateView):
     form_class = SectionForm
     template_name = "academic/section_form.html"
     success_url = reverse_lazy("section_list")
+    next_url_name = "room_create"
     success_message = "Section created successfully!"
 
     def get_form_kwargs(self):
@@ -682,6 +698,7 @@ class SubjectCreateView(SuccessMessageMixin, CreateView):
     form_class = SubjectForm
     template_name = "academic/subject_form.html"
     success_url = reverse_lazy("subject_list")
+    next_url_name = "manage_fixed_entries"
     success_message = "Subject created successfully!"
 
     def get_form_kwargs(self):
@@ -794,6 +811,7 @@ class ClassSubjectCreateView(SuccessMessageMixin, CreateView):
     form_class = ClassSubjectForm
     template_name = "academic/classsubject_form.html"
     success_url = reverse_lazy("classsubject_list")
+    next_url_name = "teacherassignment_create"
     success_message = "Class subject mapping created successfully!"
 
     def get_form_kwargs(self):
@@ -887,12 +905,12 @@ class PeriodListView(LoginRequiredMixin, ListView):
         school = self.get_school()
         
         if school:
-            # Get distinct wings that actually have periods for this school
-            wings = PeriodDefinition.objects.filter(school=school).values_list('wing', flat=True).distinct()
-            context["wings"] = wings
+            # Get distinct wings used in this school's sections or period definitions
+            used_wings = Section.objects.filter(class_instance__school=school).values_list('wing', flat=True).distinct()
+            context["wings"] = [w for w in used_wings if w] or [choice[0] for choice in WING_CHOICES]
         else:
             context["wings"] = []
-            
+
         return context
 
 
@@ -917,6 +935,7 @@ class PeriodCreateView(SuccessMessageMixin, CreateView):
     form_class = PeriodDefinitionForm
     template_name = "academic/period_form.html"
     success_url = reverse_lazy("period_list")
+    next_url_name = "subject_create"
     success_message = "Period created successfully!"
 
     def get_form_kwargs(self):
@@ -1035,6 +1054,7 @@ class RoomCreateView(SuccessMessageMixin, CreateView):
     form_class = RoomForm
     template_name = "academic/room_form.html"
     success_url = reverse_lazy("room_list")
+    next_url_name = "period_create"
     success_message = "Room created successfully!"
 
     def get_form_kwargs(self):
@@ -1171,6 +1191,8 @@ def bulk_create_periods(request):
                         current_dt = end_dt
 
                 messages.success(request, f"{created} periods successfully configured for {school.name} ({wing}).")
+                if request.POST.get('save_and_next') == 'true':
+                    return redirect("teacher_create")
                 return redirect("period_list")
 
             except Exception as e:
@@ -1217,6 +1239,8 @@ def bulk_create_periods(request):
                         current_dt = end_dt
 
                 messages.success(request, f"{created} periods created for {school.name} ({wing}).")
+                if request.POST.get('save_and_next') == 'true':
+                    return redirect("teacher_create")
                 return redirect("period_list")
 
             except Exception as e:
