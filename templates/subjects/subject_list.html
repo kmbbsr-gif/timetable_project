@@ -1,154 +1,308 @@
 {% extends 'base.html' %}
 
-{% block title %}Subjects - Timetable Studio{% endblock %}
+{% block title %}Subjects - Keshab Sir's School Studio{% endblock %}
 
-{% block extra_css %}
+{% block content %}
 <style>
+    /* ─── Animated Gradient Background ─── */
     .glass-page-wrapper {
-        padding: 2rem 1rem;
-        min-height: calc(100vh - 70px);
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 20px;
     }
-    .max-width-lg {
-        max-width: 1200px;
-        margin: 0 auto;
+
+    /* Floating ambient orbs for depth */
+    .glass-page-wrapper::before,
+    .glass-page-wrapper::after {
+        content: '';
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.4;
+        z-index: 0;
+        pointer-events: none;
+        animation: float 20s ease-in-out infinite;
     }
+
+    .glass-page-wrapper::before {
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+        animation-delay: 0s;
+    }
+
+    .glass-page-wrapper::after {
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, #ff6b6b 0%, transparent 70%);
+        bottom: -50px;
+        left: -50px;
+        animation-delay: -10s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* ─── Glass Morphism Card ─── */
     .glass-card {
+        background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+    }
+
+    .glass-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    }
+
+    /* ─── Glass Header ─── */
+    .glass-header {
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        padding: 2rem;
-    }
-    .glass-header {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1.5rem 2rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
         flex-wrap: wrap;
         gap: 1rem;
     }
+
     .glass-title {
         color: #ffffff;
         font-size: 1.75rem;
-        font-weight: 700;
+        font-weight: 600;
         margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        letter-spacing: -0.02em;
         display: flex;
         align-items: center;
         gap: 0.5rem;
     }
-    .scope-badge {
-        font-size: 0.85rem;
-        padding: 0.35rem 0.8rem;
-        border-radius: 10px;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        background: rgba(16, 185, 129, 0.15);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        color: #6ee7b7;
+
+    .glass-title i {
+        color: #00d4ff;
+        filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.5));
     }
-    .glass-table-container {
-        overflow-x: auto;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .glass-table {
-        width: 100%;
-        border-collapse: collapse;
-        color: #ffffff;
-    }
-    .glass-table th {
-        background: rgba(255, 255, 255, 0.08);
-        padding: 1rem;
-        font-weight: 600;
-        text-align: left;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #94a3b8;
-    }
-    .glass-table td {
-        padding: 1rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        vertical-align: middle;
-    }
-    .glass-table tbody tr:hover {
-        background: rgba(255, 255, 255, 0.03);
-    }
-    .code-tag {
-        background: rgba(99, 102, 241, 0.2);
-        color: #a5b4fc;
-        border: 1px solid rgba(99, 102, 241, 0.4);
-        padding: 0.2rem 0.6rem;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.85rem;
-    }
+
+    /* ─── Glass Buttons ─── */
     .btn-glass {
+        background: rgba(0, 212, 255, 0.15);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        color: #00d4ff !important;
+        padding: 0.6rem 1.25rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        text-decoration: none !important;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        color: #ffffff;
-        padding: 0.6rem 1.2rem;
-        border-radius: 10px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.9rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: all 0.2s ease;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 212, 255, 0.15);
     }
+
     .btn-glass:hover {
+        background: rgba(0, 212, 255, 0.3);
+        border-color: rgba(0, 212, 255, 0.6);
+        color: #ffffff !important;
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
-        color: #ffffff;
+        box-shadow: 0 8px 25px rgba(0, 212, 255, 0.35);
     }
+
+    .btn-glass-danger {
+        background: rgba(255, 107, 107, 0.15);
+        border: 1px solid rgba(255, 107, 107, 0.35);
+        color: #ff6b6b !important;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.15);
+    }
+
+    .btn-glass-danger:hover {
+        background: rgba(255, 107, 107, 0.3);
+        border-color: rgba(255, 107, 107, 0.6);
+        color: #ffffff !important;
+        box-shadow: 0 8px 25px rgba(255, 107, 107, 0.35);
+    }
+
+    .btn-glass-secondary {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .btn-glass-secondary:hover {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.4);
+        color: #ffffff !important;
+    }
+
     .btn-glass-sm {
         padding: 0.35rem 0.75rem;
         font-size: 0.8rem;
         border-radius: 8px;
     }
-    .btn-glass-secondary {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.2);
+
+    /* ─── Glass Table ─── */
+    .glass-table-container {
+        padding: 1rem 1.5rem 1.5rem 1.5rem;
+        overflow-x: auto;
     }
-    .btn-glass-danger {
-        background: rgba(239, 68, 68, 0.2);
-        border-color: rgba(239, 68, 68, 0.4);
-        color: #fca5a5;
+
+    .glass-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        color: rgba(255, 255, 255, 0.9);
     }
-    .btn-glass-danger:hover {
-        background: rgba(239, 68, 68, 0.4);
+
+    .glass-table thead th {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: #00d4ff;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 1rem 1.25rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+        white-space: nowrap;
+    }
+
+    .glass-table tbody tr {
+        background: rgba(255, 255, 255, 0.03);
+        transition: all 0.25s ease;
+    }
+
+    .glass-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: scale(1.002);
+    }
+
+    .glass-table td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-table td:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+        border-left: 1px solid rgba(255, 255, 255, 0.05);
+        font-weight: 600;
         color: #ffffff;
     }
-    .action-group {
-        display: flex;
+
+    .glass-table td:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    /* ─── Tags & Badges ─── */
+    .code-tag {
+        background: rgba(0, 212, 255, 0.12);
+        color: #00d4ff;
+        border: 1px solid rgba(0, 212, 255, 0.35);
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
+        font-family: monospace;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .scope-badge {
+        font-size: 0.85rem;
+        background: rgba(124, 58, 237, 0.25);
+        border: 1px solid rgba(124, 58, 237, 0.5);
+        color: #c4b5fd;
+        padding: 0.35rem 0.8rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
         gap: 0.4rem;
     }
-</style>
-{% endblock %}
 
-{% block content %}
+    .gap-badge {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.85);
+        padding: 0.25rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+
+    .color-indicator {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        flex-shrink: 0;
+    }
+
+    .action-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .glass-alert {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
 <div class="container-fluid px-4">
+    <!-- Wizard Stepper (Step 7: Subjects) -->
     {% include 'components/wizard_stepper.html' with current_step=7 %}
 
     <div class="page-header">
         <h1>📚 Subject Directory</h1>
     </div>
-    <!-- Your Subject form/table content goes here -->
 </div>
+
 <div class="glass-page-wrapper">
     <div class="container-fluid max-width-lg">
         
         <!-- Messages -->
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show glass-alert" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -164,7 +318,7 @@
                     </h1>
                     {% if user.is_superuser and not current_school and not request.school %}
                         <div class="mt-2">
-                            <span class="scope-badge" style="background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #a5b4fc;">
+                            <span class="scope-badge">
                                 <i class="bi bi-globe"></i> Master Overview: <strong>All Schools</strong>
                             </span>
                         </div>
@@ -177,10 +331,14 @@
                     {% endif %}
                 </div>
                 
-                <a href="{% url 'subject_create' %}" class="btn-glass">
-                    <i class="bi bi-plus-circle"></i> Add Subject
-                </a>
-                <a href="{% url 'manage_fixed_entries' %}" class="btn-glass">Next: Fixed Activities ➔</a>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{% url 'subject_create' %}" class="btn-glass">
+                        <i class="bi bi-plus-circle"></i> Add Subject
+                    </a>
+                    <a href="{% url 'manage_fixed_entries' %}" class="btn-glass">
+                        <span>Next: Fixed Activities</span> ➔
+                    </a>
+                </div>
             </div>
 
             <!-- Table -->
@@ -205,8 +363,8 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <span style="display:inline-block; width:12px; height:12px; border-radius:50%; background-color: {{ subject.color|default:'#4f46e5' }};"></span>
-                                    <strong>{{ subject.name }}</strong>
+                                    <span class="color-indicator" style="background-color: {{ subject.color|default:'#4f46e5' }};"></span>
+                                    <strong style="font-size: 1.05rem; color: #ffffff;">{{ subject.name }}</strong>
                                 </div>
                             </td>
 
@@ -219,14 +377,14 @@
                             {% endif %}
 
                             <td>
-                                <small style="color: rgba(255, 255, 255, 0.7);">
+                                <span class="gap-badge">
                                     Min: {{ subject.min_gap_periods|default:0 }} | Max: {{ subject.max_gap_periods|default:4 }}
-                                </small>
+                                </span>
                             </td>
 
                             <td>
                                 <div class="action-group">
-                                    <a href="{% url 'subject_detail' subject.pk %}" class="btn-glass btn-glass-secondary btn-glass-sm" title="View Subject">
+                                    <a href="{% url 'subject_detail' subject.pk %}" class="btn-glass btn-glass-sm" title="View Subject">
                                         <i class="bi bi-eye"></i> View
                                     </a>
                                     <a href="{% url 'subject_update' subject.pk %}" class="btn-glass btn-glass-secondary btn-glass-sm" title="Edit Subject">
@@ -240,8 +398,12 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="{% if user.is_superuser and not current_school and not request.school %}5{% else %}4{% endif %}" class="text-center py-4" style="color: rgba(255, 255, 255, 0.5);">
-                                <i class="bi bi-info-circle me-1"></i> No subjects found for this institution.
+                            <td colspan="{% if user.is_superuser and not current_school and not request.school %}5{% else %}4{% endif %}" class="text-center py-5" style="color: rgba(255, 255, 255, 0.6);">
+                                <i class="bi bi-journal-x display-6 d-block mb-3" style="color: #00d4ff; opacity: 0.5;"></i>
+                                <p class="mb-2">No subjects found for this institution.</p>
+                                <a href="{% url 'subject_create' %}" class="btn-glass mt-2">
+                                    <i class="bi bi-plus-circle"></i> Add First Subject
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
